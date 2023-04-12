@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/11 18:01:22 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/11 18:46:48 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,11 @@
 # include "raw_file_type.h"
 # include "string_utils.h"
 # include <stdio.h>
-# include <fcntl.h>
 # include <string.h>
+# include <time.h>
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <unistd.h>
 
 struct second_data_byte {
 	unsigned long long	total_byte;
