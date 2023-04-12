@@ -6,11 +6,12 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/12 11:20:09 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/12 14:39:24 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
+#include <stdlib.h>
 
 static char*	make_filename(struct tm *time_info, int second)
 {
@@ -50,7 +51,7 @@ void	save_data(struct RawDataVer2_t *data, struct minute_data *m_data)
 	int	start_time, end_time, int_per_second_byte, ext_per_second_byte;
 
 	start_time = data->start_time < 60 ? data->start_time : 0;
-	end_time = data->end_time < 60 ? data->end_time : 60;
+	end_time = data->end_time < 60 ? data->end_time : 59;
 	int_per_second_byte = data->int_byte.byte;
 	ext_per_second_byte = data->ext_byte.byte;
 	if (end_time - start_time != 0)
@@ -58,7 +59,7 @@ void	save_data(struct RawDataVer2_t *data, struct minute_data *m_data)
 		int_per_second_byte /= (end_time - start_time);
 		ext_per_second_byte /= (end_time - start_time);
 	}
-	while (start_time < end_time)
+	while (start_time <= end_time)
 	{
 		m_data->data[start_time].internal[data->int_cid].total_byte += int_per_second_byte;
 		assert(m_data->data[start_time].internal[data->int_cid].total_byte >= (unsigned long long)int_per_second_byte);
@@ -85,6 +86,11 @@ void	setup(int argc, char *argv[], struct minute_data *m_data)
 		{
 			time = header.time;
 			m_data->time_info = localtime(&time);
+			if (m_data->time_info == NULL)
+			{
+				fprintf(stderr, "Header Parsing Error!\n");
+				exit(EXIT_FAILURE);
+			}
 		}
 		while ((read_size = fread(&data, DATA_SIZE, 1, fp)) > 0)
 			save_data(&data, m_data);
