@@ -6,11 +6,12 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/12 14:39:24 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/12 19:09:34 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
+#include <pthread.h>
 #include <stdlib.h>
 
 static char*	make_filename(struct tm *time_info, int second)
@@ -39,8 +40,8 @@ void	save_second_file(struct minute_data *m_data)
 		filename = make_filename(m_data->time_info, i);
 		fp = fopen(filename, "w");
 		for (j = 0; j < MAX_CID_SIZE; j++)
-			if (m_data->data[i].internal[j].total_byte != 0)
-				fprintf(fp, "%d,%llu,%llu\n", j, m_data->data[i].internal[j].total_byte, m_data->data[i].external[j].total_byte);
+			if (m_data->s_data[i].internal[j].total_byte != 0)
+				fprintf(fp, "%d,%llu,%llu\n", j, m_data->s_data[i].internal[j].total_byte, m_data->s_data[i].external[j].total_byte);
 		free(filename);
 		fclose(fp);
 	}
@@ -61,54 +62,122 @@ void	save_data(struct RawDataVer2_t *data, struct minute_data *m_data)
 	}
 	while (start_time <= end_time)
 	{
-		m_data->data[start_time].internal[data->int_cid].total_byte += int_per_second_byte;
-		assert(m_data->data[start_time].internal[data->int_cid].total_byte >= (unsigned long long)int_per_second_byte);
-		m_data->data[start_time].external[data->ext_cid].total_byte += ext_per_second_byte;
-		assert(m_data->data[start_time].external[data->ext_cid].total_byte >= (unsigned long long)ext_per_second_byte);
+		m_data->s_data[start_time].internal[data->int_cid].total_byte += int_per_second_byte;
+		assert(m_data->s_data[start_time].internal[data->int_cid].total_byte >= (unsigned long long)int_per_second_byte);
+		m_data->s_data[start_time].external[data->ext_cid].total_byte += ext_per_second_byte;
+		assert(m_data->s_data[start_time].external[data->ext_cid].total_byte >= (unsigned long long)ext_per_second_byte);
 		start_time++;
 	}
 }
 
-void	setup(int argc, char *argv[], struct minute_data *m_data)
+struct save_file*	setup(int argc, char *argv[])
 {
-	int						read_size, i;
-	FILE					*fp;
-	struct RawFileHeader2_t	header;
-	struct RawDataVer2_t	data;
-	time_t					time;
+	struct save_file		*ret;
+	int						i;
 
-	for (i = 1; i < argc; i++)
+	ret = malloc(sizeof(struct save_file));
+	assert(ret != NULL);
+	memset(ret, 0, sizeof(struct save_file));
+	ret->m_data = malloc(sizeof(struct minute_data) * argc);
+	assert(ret->m_data != NULL);
+	memset(ret->m_data, 0, sizeof(struct minute_data) * argc);
+	for (i = 0; i < BUFF_LENGTH; i++)
+		pthread_mutex_init(&ret->buffers[i].lock, NULL);
+	pthread_mutex_init(&ret->lock, NULL);
+	ret->log_files = argv;
+	ret->file_count = argc;
+	return (ret);
+}
+
+void*	read_thread(void *arg)
+{
+	struct save_file	*file_data = arg;
+	int					i, j, buffer_id, read_size, print_size;
+	FILE				*fp;
+
+	buffer_id = 0;
+	for (i = 1; i < file_data->file_count; i++)
 	{
-		fp = fopen(argv[i], "r");
-		assert(fp != NULL);
-		read_size = fread(&header, HEADER_SIZE, 1, fp);
-		if (read_size)
+		fp = fopen(file_data->log_files[i], "r");
+		if (fp == NULL)
 		{
-			time = header.time;
-			m_data->time_info = localtime(&time);
-			if (m_data->time_info == NULL)
+			fprintf(stderr, "Error!\nFile Open Error : %s\n", file_data->log_files[i]);
+			exit(EXIT_FAILURE);
+		}
+		while (1)
+		{
+			pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
+			read_size = fread(file_data->buffers[buffer_id].b_data, BUFF_SIZE, 1, fp);
+			pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
+			if (read_size == 1)
+				print_size = BUFF_SIZE;
+			else
+				print_size = read_size;
+			for (j = 0; j < print_size; j++)
 			{
-				fprintf(stderr, "Header Parsing Error!\n");
-				exit(EXIT_FAILURE);
+				printf("%02X ", file_data->buffers->b_data[j]);
+				if (j % 16 == 0)
+					printf("\n");
+			}
+			buffer_id = (buffer_id + 1) % BUFF_LENGTH;
+			if (read_size != 0)
+			{
+				file_data->buffers[buffer_id].status = END;
+				break ;
 			}
 		}
-		while ((read_size = fread(&data, DATA_SIZE, 1, fp)) > 0)
-			save_data(&data, m_data);
-		fclose(fp);
+	}
+	file_data->read_end = true;
+	return (EXIT_SUCCESS);
+}
+
+void*	write_thread(void *arg)
+{
+	struct save_file	*file_data = arg;
+	int					i, buffer_id, read_size, index;
+
+	buffer_id = 0;
+	while (1)
+	{
+		pthread_mutex_lock(&file_data->lock);
+		if (file_data->read_end)
+			break ;
+		pthread_mutex_unlock(&file_data->lock);
+		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
+		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
+	}
+	return (EXIT_SUCCESS);
+}
+
+void	clear(struct save_file *file_data)
+{
+	int	i;
+
+	if (file_data)
+	{
+		if (file_data->m_data)
+			free(file_data->m_data);
+		for (i = 0; i < BUFF_LENGTH; i++)
+			pthread_mutex_destroy(&file_data->buffers[i].lock);
+		free(file_data);
 	}
 }
 
 int	main(int argc, char *argv[])
 {
-	struct minute_data	data;
+	pthread_t			read_thread_id, write_thread_id;
+	struct save_file	*file_data;
 
 	if (argc == 1)
 	{
 		fprintf(stderr, "Error!\nUsage : %s filename1 filename2 ...\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	memset(&data, 0, sizeof(struct minute_data));
-	setup(argc, argv, &data);
-	save_second_file(&data);
+	file_data = setup(argc, argv);
+	pthread_create(&read_thread_id, NULL, read_thread, file_data);
+	// pthread_create(&write_thread_id, NULL, write_thread, file_data);
+	pthread_join(read_thread_id, NULL);
+	// pthread_join(write_thread_id, NULL);
+	clear(file_data);
 	return (EXIT_SUCCESS);
 }
