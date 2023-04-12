@@ -6,11 +6,11 @@
 #    By: chulee <chulee@nstek.com>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/03/21 14:04:03 by chulee            #+#    #+#              #
-#    Updated: 2023/04/11 18:20:15 by chulee           ###   ########.fr        #
+#    Updated: 2023/04/12 11:19:01 by chulee           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME=session_log
+NAME=session_simulator
 SRCS=$(wildcard srcs/*.c)
 OBJS=$(addprefix objs/, $(notdir $(SRCS:.c=.o)))
 LOGS=$(wildcard log_file/*.txt)

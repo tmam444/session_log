@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/12 10:03:55 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/12 11:20:09 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,8 +55,8 @@ void	save_data(struct RawDataVer2_t *data, struct minute_data *m_data)
 	ext_per_second_byte = data->ext_byte.byte;
 	if (end_time - start_time != 0)
 	{
-		int_per_second_byte /= end_time - start_time;
-		ext_per_second_byte /= end_time - start_time;
+		int_per_second_byte /= (end_time - start_time);
+		ext_per_second_byte /= (end_time - start_time);
 	}
 	while (start_time < end_time)
 	{
