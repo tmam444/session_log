@@ -6,11 +6,14 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/14 14:37:11 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/14 18:56:30 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
+#include "string_utils.h"
+#include <stdlib.h>
+#include <time.h>
 
 static char*	make_filename(struct tm *time_info, int second)
 {
@@ -71,6 +74,60 @@ void	save_data(struct RawDataVer2_t *data, struct minute_data *m_data)
 	}
 }
 
+void	find_files(struct save_file *info)
+{
+	// const char		*path = "/var/qosd/log/raw";
+	const char		*path = "/home/chulee/session_log/data";
+	char			directory_path[512], file_path[1024];
+	DIR				*dir;
+    struct dirent	*entry;
+    struct stat 	file_stat;
+	time_t			start_t, end_t;
+
+	snprintf(directory_path, sizeof(directory_path), "%s/%04d/%02d/%02d", path, info->start_tm.tm_year + 1900, info->start_tm.tm_mon + 1, info->start_tm.tm_mday);
+	start_t = mktime(&info->start_tm);
+	end_t = mktime(&info->end_tm);
+	dir = opendir(directory_path);
+	assert(dir != NULL);
+	while ((entry = readdir(dir)) != NULL) {
+		snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, entry->d_name);
+		if (stat(file_path, &file_stat) == -1) {
+			perror("stat");
+			continue;
+		}
+		if (S_ISREG(file_stat.st_mode)) {
+			if (file_stat.st_ctime >= start_t && file_stat.st_ctime <= end_t)
+			{
+				info->log_files = list_push(info->log_files, ntk_strdup(file_path));
+				info->files_length++;
+			}
+		}
+	}
+    closedir(dir);
+}
+
+void	date_parsing(char *start_time, char *end_time, struct save_file *info)
+{
+	int			minute;
+	time_t		start_t, end_t;
+	double		diff_seconds;
+
+	if (strptime(start_time, "%Y-%m-%d-%H:%M", &info->start_tm) == NULL) {
+		printf("Error parsing date string : %s\n", start_time);
+		exit(EXIT_FAILURE);
+    }
+	if (strptime(end_time, "%Y-%m-%d-%H:%M", &info->end_tm) == NULL) {
+		printf("Error parsing date string : %s\n", end_time);
+		exit(EXIT_FAILURE);
+    }
+	start_t = mktime(&info->start_tm);
+	end_t = mktime(&info->end_tm);
+    diff_seconds = difftime(end_t, start_t);
+    minute = diff_seconds / 60;
+	info->m_data = malloc(sizeof(struct minute_data) * (minute + 1));
+	memset(info->m_data, 0, sizeof(struct minute_data) * (minute + 1));
+}
+
 struct save_file*	setup(int argc, char *argv[])
 {
 	struct save_file		*ret;
@@ -79,31 +136,30 @@ struct save_file*	setup(int argc, char *argv[])
 	ret = malloc(sizeof(struct save_file));
 	assert(ret != NULL);
 	memset(ret, 0, sizeof(struct save_file));
-	ret->m_data = malloc(sizeof(struct minute_data) * argc);
-	assert(ret->m_data != NULL);
-	memset(ret->m_data, 0, sizeof(struct minute_data) * argc);
 	for (i = 0; i < BUFF_LENGTH; i++)
 		pthread_mutex_init(&ret->buffers[i].lock, NULL);
 	pthread_mutex_init(&ret->lock, NULL);
-	ret->log_files = argv;
-	ret->file_count = argc;
+	date_parsing(argv[1], argv[2], ret);
+	find_files(ret);
 	return (ret);
 }
 
 void*	read_thread(void *arg)
 {
 	struct save_file	*file_data = arg;
-	int					i, buffer_id, read_size;
+	int					buffer_id, read_size;
+	List				*cur;
 	bool				new_file;
 	FILE				*fp;
 
 	buffer_id = 0;
-	for (i = 1; i < file_data->file_count; i++)
+	cur = file_data->log_files;
+	while (cur != NULL)
 	{
-		fp = fopen(file_data->log_files[i], "r");
+		fp = fopen(cur->value, "r");
 		if (fp == NULL)
 		{
-			fprintf(stderr, "Error!\nFile Open Error : %s\n", file_data->log_files[i]);
+			fprintf(stderr, "Error!\nFile Open Error : %s\n", (char *)cur->value);
 			exit(EXIT_FAILURE);
 		}
 		new_file = true;
@@ -127,6 +183,7 @@ void*	read_thread(void *arg)
 				break;
 		}
 		fclose(fp);
+		cur = cur->next;
 	}
 	pthread_mutex_lock(&file_data->lock);
 	file_data->read_end = true;
@@ -202,7 +259,10 @@ void*	write_thread(void *arg)
 		if (file_data->buffers[buffer_id].status == END || file_data->buffers[buffer_id].read_size == 0)
 		{
 			if (file_data->buffers[buffer_id].status == END)
+			{
+				printf("minute_index = %d\n", minute_index);
 				minute_index++;
+			}
 			pthread_mutex_lock(&file_data->lock);
 			is_end = file_data->read_end;
 			pthread_mutex_unlock(&file_data->lock);
@@ -227,6 +287,8 @@ void	clear(struct save_file *file_data)
 			free(file_data->m_data);
 		for (i = 0; i < BUFF_LENGTH; i++)
 			pthread_mutex_destroy(&file_data->buffers[i].lock);
+		if (file_data->log_files)
+			list_free(file_data->log_files);
 		free(file_data);
 	}
 }
@@ -236,9 +298,9 @@ int	main(int argc, char *argv[])
 	pthread_t			read_thread_id, write_thread_id;
 	struct save_file	*file_data;
 
-	if (argc == 1)
+	if (argc != 3)
 	{
-		fprintf(stderr, "Error!\nUsage : %s filename1 filename2 ...\n", argv[0]);
+		fprintf(stderr, "Error!\nUsage : %s YYYY-mm-DD-HH-MM[start_time] YYYY-mm-DD-HH-MM[end_time]\n", argv[0]);
 		exit(EXIT_FAILURE);
 	}
 	file_data = setup(argc, argv);

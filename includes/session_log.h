@@ -6,19 +6,23 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/13 18:59:29 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/14 18:19:44 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SESSION_LOG_H
 # define SESSION_LOG_H
+# define _XOPEN_SOURCE
 # define HEADER_SIZE	sizeof(struct RawFileHeader2_t)
 # define DATA_SIZE		sizeof(struct RawDataVer2_t)
 # define MAX_CID_SIZE	5000
 # define SECOND			60
-# define BUFF_SIZE		4194304
-# define BUFF_LENGTH	2
+# define BUFF_SIZE      65536
+# define BUFF_LENGTH	10
 # include "raw_file_type.h"
+# include "list.h"
+# include <stdlib.h>
+# include <time.h>
 # include <stdio.h>
 # include <assert.h>
 # include <string.h>
@@ -30,6 +34,8 @@
 # include <bits/pthreadtypes.h>
 # include <arpa/inet.h>
 # include <pthread.h>
+# include <dirent.h>
+# include <sys/stat.h>
 
 enum	e_file_status
 {
@@ -59,7 +65,6 @@ struct buffer
 {
 	pthread_mutex_t		lock;
 	unsigned char		b_data[BUFF_SIZE];
-	bool				is_full;
 	int					read_size;
 	enum e_file_status	status;
 };
@@ -67,8 +72,10 @@ struct buffer
 struct save_file
 {
 	pthread_mutex_t		lock;
-	char				**log_files;
-	int					file_count;
+	List				*log_files;
+	int					files_length;
+	struct tm			start_tm;
+	struct tm			end_tm;
 	struct minute_data	*m_data;
 	struct buffer		buffers[BUFF_LENGTH];
 	bool				read_end;
