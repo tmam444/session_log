@@ -6,12 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/13 18:51:53 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/14 14:37:11 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
-#include <stdlib.h>
 
 static char*	make_filename(struct tm *time_info, int second)
 {
@@ -113,22 +112,19 @@ void*	read_thread(void *arg)
 			buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 			pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
 			read_size = fread(file_data->buffers[buffer_id].b_data, 1, BUFF_SIZE, fp);
-			if (read_size == 0)
-			{
-				pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
-				break;
-			}
-			file_data->buffers[buffer_id].read_size = read_size;
 			if (new_file)
 			{
 				file_data->buffers[buffer_id].status = NEW;
 				new_file = false;
 			}
-			else if (read_size == BUFF_SIZE)
-				file_data->buffers[buffer_id].status = CONTINUE;
-			else if (read_size != BUFF_SIZE)
+			else if (read_size == 0)
 				file_data->buffers[buffer_id].status = END;
+			else
+				file_data->buffers[buffer_id].status = CONTINUE;
+			file_data->buffers[buffer_id].read_size = read_size;
 			pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
+			if (read_size == 0)
+				break;
 		}
 		fclose(fp);
 	}
