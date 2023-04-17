@@ -6,10 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/14 18:56:30 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/17 19:05:30 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "raw_file_type.h"
 #include "session_log.h"
 #include "string_utils.h"
 #include <stdlib.h>
@@ -106,50 +107,71 @@ void	find_files(struct save_file *info)
     closedir(dir);
 }
 
-void	date_parsing(char *start_time, char *end_time, struct save_file *info)
+void	date_parsing(char *start_time, struct save_file *info)
 {
-	int			minute;
-	time_t		start_t, end_t;
-	double		diff_seconds;
+	time_t		end_t;
+	struct tm	*end_tm, *t;
 
 	if (strptime(start_time, "%Y-%m-%d-%H:%M", &info->start_tm) == NULL) {
-		printf("Error parsing date string : %s\n", start_time);
+		fprintf(stderr, "Error parsing date string : %s\n", start_time);
 		exit(EXIT_FAILURE);
     }
-	if (strptime(end_time, "%Y-%m-%d-%H:%M", &info->end_tm) == NULL) {
-		printf("Error parsing date string : %s\n", end_time);
-		exit(EXIT_FAILURE);
-    }
-	start_t = mktime(&info->start_tm);
-	end_t = mktime(&info->end_tm);
-    diff_seconds = difftime(end_t, start_t);
-    minute = diff_seconds / 60;
-	info->m_data = malloc(sizeof(struct minute_data) * (minute + 1));
-	memset(info->m_data, 0, sizeof(struct minute_data) * (minute + 1));
+	t = &info->start_tm;
+	info->start_tm.tm_min += 2;
+	printf("현재 시각: %d년 %d월 %d일 %d시 %d분 %d초\n",
+            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+            t->tm_hour, t->tm_min, t->tm_sec);
+	end_t = mktime(&info->start_tm) + 120;
+	end_tm = localtime(&end_t);
+	memcpy(&info->end_tm, end_tm, sizeof(struct tm));
+	t = &info->end_tm;
+	printf("현재 시각: %d년 %d월 %d일 %d시 %d분 %d초\n",
+            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+            t->tm_hour, t->tm_min, t->tm_sec);
 }
 
-struct save_file*	setup(int argc, char *argv[])
+struct save_file*	setup(char *start_time, int argc, char *argv[])
 {
 	struct save_file		*ret;
 	int						i;
+	List					*cur;
 
 	ret = malloc(sizeof(struct save_file));
 	assert(ret != NULL);
 	memset(ret, 0, sizeof(struct save_file));
 	for (i = 0; i < BUFF_LENGTH; i++)
+	{
+		ret->buffers[i].status = EMPTY;
 		pthread_mutex_init(&ret->buffers[i].lock, NULL);
+	}
+	(void)argc, (void)argv;
 	pthread_mutex_init(&ret->lock, NULL);
-	date_parsing(argv[1], argv[2], ret);
+	date_parsing(start_time, ret);
 	find_files(ret);
+	printf("length = %d\n", ret->files_length);
+	for (cur = ret->log_files; cur != NULL; cur = cur->next)
+		printf("files = %s\n", (char *)cur->value);
+	ret->m_data = malloc(sizeof(struct minute_data) * (ret->files_length));
+	memset(ret->m_data, 0, sizeof(struct minute_data) * (ret->files_length));
 	return (ret);
 }
+
+long	get_file_size(FILE *file) {
+	long current_position, file_size;
+
+	current_position = ftell(file); // 현재 파일 포인터 위치를 저장합니다.
+	fseek(file, 0, SEEK_END); // 파일 포인터를 파일의 끝으로 이동시킵니다.
+    file_size = ftell(file); // 파일 포인터의 위치를 가져옵니다.
+    fseek(file, current_position, SEEK_SET); // 파일 포인터를 원래 위치로 되돌립니다.
+    return (file_size);
+}
+
 
 void*	read_thread(void *arg)
 {
 	struct save_file	*file_data = arg;
-	int					buffer_id, read_size;
+	int					buffer_id, read_size, file_size;
 	List				*cur;
-	bool				new_file;
 	FILE				*fp;
 
 	buffer_id = 0;
@@ -162,47 +184,54 @@ void*	read_thread(void *arg)
 			fprintf(stderr, "Error!\nFile Open Error : %s\n", (char *)cur->value);
 			exit(EXIT_FAILURE);
 		}
-		new_file = true;
-		while (1)
+		read_size = -1;
+		file_size = get_file_size(fp);
+		printf("file_size = %d\n", file_size);
+		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
+		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
+		if (file_data->buffers[buffer_id].status == EMPTY)
 		{
-			buffer_id = (buffer_id + 1) % BUFF_LENGTH;
-			pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
-			read_size = fread(file_data->buffers[buffer_id].b_data, 1, BUFF_SIZE, fp);
-			if (new_file)
-			{
+			file_data->buffers[buffer_id].b_data = malloc(file_size);
+			assert(file_data->buffers[buffer_id].b_data != NULL);
+			memset(file_data->buffers[buffer_id].b_data, 0, file_size);
+			read_size = fread(file_data->buffers[buffer_id].b_data, 1, file_size, fp);
+			printf("file_size = %d, read_size = %d, equals = %d\n", file_size, read_size, file_size == read_size);
+			if (read_size == file_size)
 				file_data->buffers[buffer_id].status = NEW;
-				new_file = false;
-			}
-			else if (read_size == 0)
-				file_data->buffers[buffer_id].status = END;
 			else
 				file_data->buffers[buffer_id].status = CONTINUE;
 			file_data->buffers[buffer_id].read_size = read_size;
-			pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
-			if (read_size == 0)
-				break;
 		}
+		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
 		fclose(fp);
 		cur = cur->next;
 	}
 	pthread_mutex_lock(&file_data->lock);
 	file_data->read_end = true;
 	pthread_mutex_unlock(&file_data->lock);
+	printf("read end!\n");
 	return (EXIT_SUCCESS);
 }
 
-void	read_header(struct buffer *buff, struct tm *time_info, int *buffer_index)
+int	read_header(unsigned char *buff, struct save_file *file_info, int *buffer_index)
 {
-	struct RawFileHeader2_t	header;
-	time_t					temp_time;
+	struct RawFileHeader2_t	*header = (struct RawFileHeader2_t *)buff;
 	struct tm				*t;
+	int						minute_index;
+	time_t					temp_time, start_time;
 	
-	assert(time_info != NULL && buff != NULL);
-	memcpy(&header, buff->b_data, HEADER_SIZE);
-	temp_time = header.time;
+	assert(file_info != NULL && buff != NULL && buffer_index != NULL);
+	start_time = mktime(&file_info->start_tm);
+	temp_time = header->time;
 	t = localtime(&temp_time);
-	memcpy(time_info, t, sizeof(struct tm));
+	printf("현재 시각: %d년 %d월 %d일 %d시 %d분 %d초\n",
+            t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+            t->tm_hour, t->tm_min, t->tm_sec);
+	minute_index = ((temp_time - start_time) / 60) + 2;
+	printf("minute_index = %d\n", minute_index);
+	memcpy(&file_info->m_data[minute_index].time_info, t, sizeof(struct tm));
 	*buffer_index += HEADER_SIZE;
+	return (minute_index);
 }
 
 void	add_data(struct minute_data *m_data, void *data)
@@ -215,24 +244,26 @@ void	add_data(struct minute_data *m_data, void *data)
 void	read_data(struct buffer *buff, int *buffer_index, struct minute_data *m_data)
 {
 	static int					remaining_buffer_size;
-	static unsigned char		data[DATA_SIZE];
+	static unsigned char		remaining_data[DATA_SIZE];
 	int							i, read_size;
 
 	if (remaining_buffer_size != 0)
 	{
-		memcpy(data + DATA_SIZE - remaining_buffer_size, buff->b_data, remaining_buffer_size);
-		add_data(m_data, data);
+		memcpy(remaining_data + DATA_SIZE - remaining_buffer_size, buff->b_data, remaining_buffer_size);
+		add_data(m_data, remaining_data);
 		*buffer_index += remaining_buffer_size;
 	}
 	for (i = *buffer_index; i < buff->read_size; i += DATA_SIZE)
 	{
-		if (BUFF_SIZE - i < (int)DATA_SIZE)
-			read_size = BUFF_SIZE - i;
+		if (buff->read_size - i < (int)DATA_SIZE)
+		{
+			read_size = buff->read_size - i;
+			memcpy(remaining_data, buff->b_data + i, read_size);
+		}
 		else
 			read_size = DATA_SIZE;
-		memcpy(data, buff->b_data + i, read_size);
 		if (read_size == DATA_SIZE)
-			add_data(m_data, data);
+			add_data(m_data, buff->b_data + i);
 	}
 	remaining_buffer_size = i - buff->read_size;
 }
@@ -244,36 +275,34 @@ void*	write_thread(void *arg)
 	int						minute_index, buffer_id, buffer_index;
 	int						i;
 
-	minute_index = buffer_id = 0;
+	buffer_id = 0;
 	while (!is_end)
 	{
 		buffer_index = 0;
 		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
-		if (file_data->buffers[buffer_id].read_size != 0)
+		if (file_data->buffers[buffer_id].status != EMPTY)
 		{
 			if (file_data->buffers[buffer_id].status == NEW)
-				read_header(&file_data->buffers[buffer_id], &file_data->m_data[minute_index].time_info, &buffer_index);
+				minute_index = read_header(file_data->buffers[buffer_id].b_data, file_data, &buffer_index);
 			read_data(&file_data->buffers[buffer_id], &buffer_index, &file_data->m_data[minute_index]);
-		}
-		if (file_data->buffers[buffer_id].status == END || file_data->buffers[buffer_id].read_size == 0)
-		{
-			if (file_data->buffers[buffer_id].status == END)
+			if (file_data->buffers[buffer_id].status == END || file_data->buffers[buffer_id].status == NEW)
 			{
-				printf("minute_index = %d\n", minute_index);
-				minute_index++;
+				pthread_mutex_lock(&file_data->lock);
+				is_end = file_data->read_end;
+				pthread_mutex_unlock(&file_data->lock);
 			}
-			pthread_mutex_lock(&file_data->lock);
-			is_end = file_data->read_end;
-			pthread_mutex_unlock(&file_data->lock);
+			file_data->buffers[buffer_id].status = EMPTY;
+			free(file_data->buffers[buffer_id].b_data);
+			file_data->buffers[buffer_id].b_data = NULL;
+			printf("free!\n");
 		}
-		file_data->buffers[buffer_id].status = CONTINUE;
-		file_data->buffers[buffer_id].read_size = 0;
 		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
 	}
-	// file create
-	for (i = 0; i < minute_index; i++)
+	printf("write test!\n");
+	for (i = 0; i < 2; i++)
 		save_second_file(&file_data->m_data[i]);
+	printf("write end!\n");
 	return (EXIT_SUCCESS);
 }
 
@@ -298,16 +327,20 @@ int	main(int argc, char *argv[])
 	pthread_t			read_thread_id, write_thread_id;
 	struct save_file	*file_data;
 
-	if (argc != 3)
+	// if (argc != 2)
+	if (argc < 2)
 	{
-		fprintf(stderr, "Error!\nUsage : %s YYYY-mm-DD-HH-MM[start_time] YYYY-mm-DD-HH-MM[end_time]\n", argv[0]);
+		fprintf(stderr, "Error!\nUsage : %s YYYY-mm-DD-HH:MM[start_time]", argv[0]);
 		exit(EXIT_FAILURE);
 	}
-	file_data = setup(argc, argv);
-	pthread_create(&read_thread_id, NULL, read_thread, file_data);
-	pthread_create(&write_thread_id, NULL, write_thread, file_data);
-	pthread_join(read_thread_id, NULL);
-	pthread_join(write_thread_id, NULL);
+	file_data = setup(argv[1], argc, argv);
+	if (file_data->files_length != 0)
+	{
+		pthread_create(&read_thread_id, NULL, read_thread, file_data);
+		pthread_create(&write_thread_id, NULL, write_thread, file_data);
+		pthread_join(read_thread_id, NULL);
+		pthread_join(write_thread_id, NULL);
+	}
 	clear(file_data);
 	return (EXIT_SUCCESS);
 }

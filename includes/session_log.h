@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/14 18:19:44 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/17 18:56:44 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,8 @@
 # define DATA_SIZE		sizeof(struct RawDataVer2_t)
 # define MAX_CID_SIZE	5000
 # define SECOND			60
-# define BUFF_SIZE      65536
-# define BUFF_LENGTH	10
+// # define BUFF_SIZE      65536
+# define BUFF_LENGTH	2
 # include "raw_file_type.h"
 # include "list.h"
 # include <stdlib.h>
@@ -41,7 +41,8 @@ enum	e_file_status
 {
 	NEW,
 	CONTINUE,
-	END
+	END,
+	EMPTY
 };
 
 struct second_data_byte
@@ -64,7 +65,7 @@ struct minute_data
 struct buffer
 {
 	pthread_mutex_t		lock;
-	unsigned char		b_data[BUFF_SIZE];
+	unsigned char		*b_data;
 	int					read_size;
 	enum e_file_status	status;
 };
