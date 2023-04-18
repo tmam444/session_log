@@ -6,12 +6,14 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 18:30:39 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/18 18:52:01 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 #include "log.h"
+
+bool	force_quit;
 
 static bool	check_file_name(struct tm *start_tm, struct tm *end_tm, char *file_name)
 {
@@ -193,10 +195,14 @@ void	command_inotify(char *directory_path)
     wd = inotify_add_watch(inotify_fd, directory_path, IN_CREATE);
     if (wd < 0)
 		log_message(LOG_ERROR, "inotify_add_watch failed");
-    while (true) {
+	force_quit = false;
+    while (!force_quit) {
 		length = read(inotify_fd, buffer, EVENT_BUFFER_SIZE);
 		if (length < 0)
-			log_message(LOG_ERROR, "inotify_fd read failed");
+		{
+			log_message(LOG_WARNING, "inotify_fd read failed");
+			break ;
+		}
 		i = 0;
 		while (i < length) {
 			event = (struct inotify_event *)&buffer[i];
@@ -209,10 +215,18 @@ void	command_inotify(char *directory_path)
     close(inotify_fd);
 }
 
+void	program_exit(int signum)
+{
+	(void)signum;
+	force_quit = true;
+}
+
 int	main(int argc, char *argv[])
 {
 	if (argc != 2)
 		log_message(LOG_ERROR, "Usage - %s directory_path", argv[0]);
+	signal(SIGINT, program_exit);
+	signal(SIGQUIT, program_exit);
 	command_inotify(argv[1]);
 	return (EXIT_SUCCESS);
 }

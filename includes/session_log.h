@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 17:34:42 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/18 18:45:31 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@
 # include <dirent.h>
 # include <sys/inotify.h>
 # include <limits.h>
+# include <signal.h>
 
 enum	e_file_status
 {
@@ -84,5 +85,7 @@ struct save_file
 long	get_file_size(FILE *file);
 void*	read_thread(void *arg);
 void*	write_thread(void *arg);
+
+extern bool	force_quit;
 
 #endif
