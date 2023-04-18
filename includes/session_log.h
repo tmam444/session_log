@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/17 18:56:44 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/18 14:23:19 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,30 +17,26 @@
 # define DATA_SIZE		sizeof(struct RawDataVer2_t)
 # define MAX_CID_SIZE	5000
 # define SECOND			60
-// # define BUFF_SIZE      65536
 # define BUFF_LENGTH	2
 # include "raw_file_type.h"
 # include "list.h"
-# include <stdlib.h>
+# include "string_utils.h"
+# include "log.h"
 # include <time.h>
+# include <stdlib.h>
 # include <stdio.h>
 # include <assert.h>
 # include <string.h>
-# include <time.h>
 # include <fcntl.h>
-# include <sys/stat.h>
 # include <unistd.h>
 # include <stdbool.h>
 # include <bits/pthreadtypes.h>
-# include <arpa/inet.h>
 # include <pthread.h>
 # include <dirent.h>
-# include <sys/stat.h>
 
 enum	e_file_status
 {
 	NEW,
-	CONTINUE,
 	END,
 	EMPTY
 };
@@ -72,14 +68,15 @@ struct buffer
 
 struct save_file
 {
-	pthread_mutex_t		lock;
 	List				*log_files;
 	int					files_length;
 	struct tm			start_tm;
 	struct tm			end_tm;
 	struct minute_data	*m_data;
 	struct buffer		buffers[BUFF_LENGTH];
-	bool				read_end;
 };
+
+void*	read_thread(void *arg);
+void*	write_thread(void *arg);
 
 #endif
