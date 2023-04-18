@@ -6,18 +6,21 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 14:23:19 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/18 17:34:42 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SESSION_LOG_H
 # define SESSION_LOG_H
 # define _XOPEN_SOURCE
-# define HEADER_SIZE	sizeof(struct RawFileHeader2_t)
-# define DATA_SIZE		sizeof(struct RawDataVer2_t)
-# define MAX_CID_SIZE	5000
-# define SECOND			60
-# define BUFF_LENGTH	2
+# define EVENT_SIZE				(sizeof(struct inotify_event))
+# define EVENT_BUFFER_SIZE		(1024 * (EVENT_SIZE + NAME_MAX + 1))
+# define FILE_READ_BUFFER_SIZE	1024
+# define HEADER_SIZE			sizeof(struct RawFileHeader2_t)
+# define DATA_SIZE				sizeof(struct RawDataVer2_t)
+# define MAX_CID_SIZE			5000
+# define SECOND					60
+# define BUFF_LENGTH			2
 # include "raw_file_type.h"
 # include "list.h"
 # include "string_utils.h"
@@ -33,6 +36,8 @@
 # include <bits/pthreadtypes.h>
 # include <pthread.h>
 # include <dirent.h>
+# include <sys/inotify.h>
+# include <limits.h>
 
 enum	e_file_status
 {
@@ -76,6 +81,7 @@ struct save_file
 	struct buffer		buffers[BUFF_LENGTH];
 };
 
+long	get_file_size(FILE *file);
 void*	read_thread(void *arg);
 void*	write_thread(void *arg);
 
