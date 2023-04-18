@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 15:47:29 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/18 16:52:20 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,11 +82,13 @@ static int	read_header(unsigned char *buff, struct save_file *file_info, int *bu
 	time_t					temp_time, start_time;
 	
 	assert(file_info != NULL && buff != NULL && buffer_index != NULL);
-	start_time = mktime(&file_info->start_tm);
+	start_time = mktime(&file_info->start_tm) - file_info->start_tm.tm_sec;
 	temp_time = header->time;
+	log_message(LOG_DEBUG, "st = %d, temp = %d", start_time, temp_time);
 	minute_index = ((temp_time - start_time) / 60);
 	if (minute_index < 0 || minute_index >= 2)
 		log_message(LOG_ERROR, "File Header Wrong!");
+	log_message(LOG_DEBUG, "minute index = %d", minute_index);
 	localtime_r(&temp_time, &file_info->m_data[minute_index].time_info);
 	*buffer_index += HEADER_SIZE;
 	return (minute_index);
@@ -94,29 +96,10 @@ static int	read_header(unsigned char *buff, struct save_file *file_info, int *bu
 
 static void	read_data(struct buffer *buff, int *buffer_index, struct minute_data *m_data)
 {
-	static int					remaining_buffer_size;
-	static unsigned char		remaining_data[DATA_SIZE];
-	int							i, read_size;
+	int	i;
 
-	if (remaining_buffer_size != 0)
-	{
-		memcpy(remaining_data + DATA_SIZE - remaining_buffer_size, buff->b_data, remaining_buffer_size);
-		save_data(remaining_data, m_data);
-		*buffer_index += remaining_buffer_size;
-	}
 	for (i = *buffer_index; i < buff->read_size; i += DATA_SIZE)
-	{
-		if (buff->read_size - i < (int)DATA_SIZE)
-		{
-			read_size = buff->read_size - i;
-			memcpy(remaining_data, buff->b_data + i, read_size);
-		}
-		else
-			read_size = DATA_SIZE;
-		if (read_size == DATA_SIZE)
-			save_data(buff->b_data + i, m_data);
-	}
-	remaining_buffer_size = i - buff->read_size;
+		save_data(buff->b_data + i, m_data);
 }
 
 void*	write_thread(void *arg)
@@ -142,6 +125,7 @@ void*	write_thread(void *arg)
 		}
 		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
 	}
+	log_message(LOG_INFO, "read data complete, file creation!");
 	for (i = 0; i < file_data->files_length; i++)
 		save_second_file(&file_data->m_data[i]);
 	log_message(LOG_INFO, "write_thread end");
