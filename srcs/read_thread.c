@@ -6,10 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 17:34:46 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/19 13:17:17 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "error.h"
 #include "session_log.h"
 
 long	get_file_size(FILE *file) {
@@ -35,7 +36,11 @@ void*	read_thread(void *arg)
 	{
 		fp = fopen(cur->value, "r");
 		if (fp == NULL)
+		{
 			log_message(LOG_ERROR, "File Open : %s\n", (char *)cur->value);
+			return (NULL);
+			// return (create_error(ERROR_FILE_NOT_FOUND));
+		}
 		file_size = get_file_size(fp);
 		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
@@ -44,7 +49,7 @@ void*	read_thread(void *arg)
 			file_data->buffers[buffer_id].b_data = malloc(file_size);
 			assert(file_data->buffers[buffer_id].b_data != NULL);
 			read_size = fread(file_data->buffers[buffer_id].b_data, file_size, 1, fp);
-			log_message(LOG_INFO, "Read File - %s, Size - %d, Full Read - %s", (char *)cur->value, file_size, read_size == 1 ? "true" : "false");
+			DEBUG_LOG("Read File - %s, Size - %d, Full Read - %s", (char *)cur->value, file_size, read_size == 1 ? "true" : "false");
 			if (read_size == 1)
 				file_data->buffers[buffer_id].read_size = file_size;
 			else
@@ -57,6 +62,6 @@ void*	read_thread(void *arg)
 		fclose(fp);
 		cur = cur->next;
 	}
-	log_message(LOG_INFO, "read_thread end");
-	return (EXIT_SUCCESS);
+	DEBUG_LOG("read_thread end");
+	return (NULL);
 }

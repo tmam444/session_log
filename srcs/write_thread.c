@@ -6,46 +6,42 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 16:52:20 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/19 17:06:52 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 
-static char*	make_filename(struct tm *time_info, int second)
+char*	make_filename(int user_id)
 {
-	const char	*path = "./log_file/";
-	const int	filename_len = 100;
+	const char	*path = "/usr/lib/qosd/tmp";
+	const int	cmd_number = 99;
+	const int	filename_len = PATH_MAX;
 	char		*filename;
 
 	filename = malloc(filename_len);
 	assert(filename != NULL);
 	memset(filename, 0, filename_len);
-	snprintf(filename, filename_len, "%straffic_%04d%02d%02d_%02d%02d%02d.txt",
-			path, time_info->tm_year + 1900, time_info->tm_mon + 1, time_info->tm_mday,
-			time_info->tm_hour, time_info->tm_min, second);
+	snprintf(filename, filename_len, "%s/real_result_%02d%02d", path, cmd_number, user_id);
 	return (filename);
 }
 
-static void	save_second_file(struct minute_data *m_data)
+static void	save_second_file(struct minute_data *m_data, int second, int user_id)
 {
 	struct tm	empty_tm = {0};
 	char		*filename;
 	FILE		*fp;
-	int			i, j;
+	int			i;
 
 	if (memcmp(&empty_tm, &m_data->time_info, sizeof(struct tm)) == 0)
 		return;
-	for (i = 0; i < SECOND; i++)
-	{
-		filename = make_filename(&m_data->time_info, i);
-		fp = fopen(filename, "w");
-		for (j = 0; j < MAX_CID_SIZE; j++)
-			if (m_data->s_data[i].internal[j].total_byte != 0)
-				fprintf(fp, "%d,%llu,%llu\n", j, m_data->s_data[i].internal[j].total_byte, m_data->s_data[i].external[j].total_byte);
-		free(filename);
-		fclose(fp);
-	}
+	filename = make_filename(user_id);
+	fp = fopen(filename, "w");
+	for (i = 0; i < MAX_CID_SIZE; i++)
+		if (m_data->s_data[second].internal[i].total_byte != 0)
+			fprintf(fp, "%d,%llu,%llu\n", i, m_data->s_data[second].internal[i].total_byte, m_data->s_data[second].external[i].total_byte);
+	free(filename);
+	fclose(fp);
 }
 
 static void	save_data(void *buffer, struct minute_data *m_data)
@@ -75,23 +71,22 @@ static void	save_data(void *buffer, struct minute_data *m_data)
 	}
 }
 
-static int	read_header(unsigned char *buff, struct save_file *file_info, int *buffer_index)
+static bool	read_header(unsigned char *buff, struct session_simulator *s_simulator, int *buffer_index)
 {
 	struct RawFileHeader2_t	*header = (struct RawFileHeader2_t *)buff;
-	int						minute_index;
-	time_t					temp_time, start_time;
-	
-	assert(file_info != NULL && buff != NULL && buffer_index != NULL);
-	start_time = mktime(&file_info->start_tm) - file_info->start_tm.tm_sec;
-	temp_time = header->time;
-	log_message(LOG_DEBUG, "st = %d, temp = %d", start_time, temp_time);
-	minute_index = ((temp_time - start_time) / 60);
-	if (minute_index < 0 || minute_index >= 2)
-		log_message(LOG_ERROR, "File Header Wrong!");
-	log_message(LOG_DEBUG, "minute index = %d", minute_index);
-	localtime_r(&temp_time, &file_info->m_data[minute_index].time_info);
+	time_t					header_time, start_time;
+
+	assert(s_simulator != NULL && buff != NULL && buffer_index != NULL);
+	start_time = mktime(&s_simulator->start_tm) - s_simulator->start_tm.tm_sec;
+	header_time = header->time;
+	if (start_time != header_time)
+	{
+		log_message(LOG_WARNING, "header time is not equals");
+		return (ERROR_FILE_HEADER);
+	}
+	localtime_r(&header_time, &s_simulator->m_data.time_info);
 	*buffer_index += HEADER_SIZE;
-	return (minute_index);
+	return (true);
 }
 
 static void	read_data(struct buffer *buff, int *buffer_index, struct minute_data *m_data)
@@ -104,30 +99,29 @@ static void	read_data(struct buffer *buff, int *buffer_index, struct minute_data
 
 void*	write_thread(void *arg)
 {
-	struct save_file		*file_data = arg;
-	int						minute_index, buffer_id, buffer_index;
-	int						i;
+	struct session_simulator	*s_simulator = arg;
+	int							buffer_id, buffer_index;
 
 	buffer_id = 0;
 	while (true)
 	{
 		buffer_index = 0;
 		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
-		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
-		if (file_data->buffers[buffer_id].status != EMPTY)
+		pthread_mutex_lock(&s_simulator->buffers[buffer_id].lock);
+		if (s_simulator->buffers[buffer_id].status != EMPTY)
 		{
-			minute_index = read_header(file_data->buffers[buffer_id].b_data, file_data, &buffer_index);
-			read_data(&file_data->buffers[buffer_id], &buffer_index, &file_data->m_data[minute_index]);
-			free(file_data->buffers[buffer_id].b_data);
-			if (file_data->buffers[buffer_id].status == END)
+			if (!read_header(s_simulator->buffers[buffer_id].b_data, s_simulator, &buffer_index))
 				break ;
-			file_data->buffers[buffer_id].status = EMPTY;
+			read_data(&s_simulator->buffers[buffer_id], &buffer_index, &s_simulator->m_data);
+			free(s_simulator->buffers[buffer_id].b_data);
+			if (s_simulator->buffers[buffer_id].status == END)
+				break ;
+			s_simulator->buffers[buffer_id].status = EMPTY;
 		}
-		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
+		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 	}
-	log_message(LOG_INFO, "read data complete, file creation!");
-	for (i = 0; i < file_data->files_length; i++)
-		save_second_file(&file_data->m_data[i]);
-	log_message(LOG_INFO, "write_thread end");
+	DEBUG_LOG("read data complete, file creation!");
+	save_second_file(&s_simulator->m_data, s_simulator->start_tm.tm_sec);
+	DEBUG_LOG("write thread end");
 	return (EXIT_SUCCESS);
 }

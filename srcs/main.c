@@ -6,20 +6,19 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 18:52:01 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/19 19:06:57 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
-#include "log.h"
 
 bool	force_quit;
 
-static bool	check_file_name(struct tm *start_tm, struct tm *end_tm, char *file_name)
+static bool	check_file_name(struct tm *search_tm, char *file_name)
 {
 	bool	ret = false;
 	char	**tokens;
-	int		file_hour, file_min;
+	int		file_hour, file_minute;
 	int		token_length = 0;
 
 	tokens = ntk_strsplit(file_name, '.');
@@ -28,113 +27,148 @@ static bool	check_file_name(struct tm *start_tm, struct tm *end_tm, char *file_n
 	if (token_length == 4)
 	{
 		file_hour = atoi(tokens[2]);
-		file_min = atoi(tokens[3]);
-		if (start_tm->tm_hour <= file_hour && start_tm->tm_min < file_min &&
-			end_tm->tm_hour >= file_hour && end_tm->tm_min >= file_min)
+		file_minute = atoi(tokens[3]);
+		if (search_tm->tm_hour == file_hour && search_tm->tm_min + 1 == file_minute)
 			ret = true;
 	}
 	ntk_strsplit_free(tokens);
 	return (ret);
 }
 
-static bool	find_files(struct save_file *info)
+static void	find_files(struct session_simulator *s_simulator, struct tm *search_time)
 {
 	// const char		*path = "/var/qosd/log/raw";
 	const char		*path = "/home/chulee/session_log/data";
 	char			directory_path[512], file_path[1024];
 	DIR				*dir;
     struct dirent	*entry;
+	List			*temp, *new_log_files = NULL;
 
-	snprintf(directory_path, sizeof(directory_path), "%s/%04d/%02d/%02d", path, info->start_tm.tm_year + 1900, info->start_tm.tm_mon + 1, info->start_tm.tm_mday);
+	snprintf(directory_path, sizeof(directory_path), "%s/%04d/%02d/%02d", \
+				path, s_simulator->start_tm.tm_year + 1900, s_simulator->start_tm.tm_mon + 1, s_simulator->start_tm.tm_mday);
 	dir = opendir(directory_path);
 	if (dir == NULL)
 	{
-		log_message(LOG_WARNING, "Directory Open - %s", directory_path);
-		return (false);
+		log_message(LOG_WARNING, "Failed Directory Open - %s", directory_path);
+		s_simulator->err_code = ERROR_DIRECTORY_NOT_FOUND;
+		return;
 	}
-	while ((entry = readdir(dir)) != NULL) {
-		snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, entry->d_name);
-		if (check_file_name(&info->start_tm, &info->end_tm, entry->d_name))
+	while ((entry = readdir(dir)) != NULL)
+	{
+		if (check_file_name(search_time, entry->d_name))
 		{
-			log_message(LOG_INFO, "ADD File - %s", file_path);
-			info->log_files = list_push(info->log_files, ntk_strdup(file_path));
-			info->files_length++;
+			snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, entry->d_name);
+			DEBUG_LOG("ADD File - %s", file_path);
+			new_log_files = list_push(new_log_files, ntk_strdup(file_path));
+			s_simulator->log_files = list_push(s_simulator->log_files, ntk_strdup(file_path));
+			s_simulator->files_length++;
 		}
 	}
     closedir(dir);
-	return (true);
 }
 
-static bool	date_parsing(char *start_time, struct save_file *info)
+static void	date_init(struct session_simulator *s_simulator, time_t start_time)
 {
-	time_t		end_t;
+	time_t		end_time;
 
-	if (strptime(start_time, "%Y-%m-%d-%H:%M:%S", &info->start_tm) == NULL)
-	{
-		log_message(LOG_WARNING, "parsing date string - %s", start_time);
-		return (false);
-	}
-	end_t = mktime(&info->start_tm) + 120;
-	localtime_r(&end_t, &info->end_tm);
-	return (true);
+	localtime_r(&start_time, &s_simulator->start_tm);
+	end_time = start_time + 60;
+	localtime_r(&end_time, &s_simulator->end_tm);
 }
 
-static struct save_file*	setup(char *start_time)
+void	update_time_and_remove_prev_data(struct session_simulator *s_simulator, time_t new_time)
 {
-	struct save_file		*ret;
-	int						i;
+	time_t	start_time;
 
-	ret = malloc(sizeof(struct save_file));
-	assert(ret != NULL);
-	memset(ret, 0, sizeof(struct save_file));
-	for (i = 0; i < BUFF_LENGTH; i++)
+	start_time = mktime(&s_simulator->start_tm) - s_simulator->start_tm.tm_sec;
+	if (start_time <= new_time && new_time < start_time + 120)
 	{
-		ret->buffers[i].status = EMPTY;
-		pthread_mutex_init(&ret->buffers[i].lock, NULL);
+		if (new_time < start_time + 60)
+			return ;
+		else
+		{
+			memcpy(&s_simulator->m_data[CUR], &s_simulator->m_data[NEXT], sizeof(struct minute_data));
+			memset(&s_simulator->m_data[NEXT], 0, sizeof(struct minute_data));
+			date_init(s_simulator, new_time);
+			find_files(s_simulator, &s_simulator->end_tm);
+		}
 	}
-	if (!date_parsing(start_time, ret))
-		return (ret);
-	if (!find_files(ret))
-		return (ret);
-	if (ret->files_length != 0)
-		ret->files_length = 2;
-	ret->m_data = malloc(sizeof(struct minute_data) * (ret->files_length));
-	memset(ret->m_data, 0, sizeof(struct minute_data) * (ret->files_length));
-	return (ret);
 }
 
-static void	clear(struct save_file *file_data)
+static void setup(struct session_simulator *s_simulator, struct command *command)
+{
+	const struct tm	empty_tm = {0};
+
+	if (memcmp(&s_simulator->start_tm, &empty_tm, sizeof(struct tm)) == 0)
+	{
+		date_init(s_simulator, command->time);
+		find_files(s_simulator, &s_simulator->start_tm);
+		find_files(s_simulator, &s_simulator->end_tm);
+	}
+	else
+	{
+		update_time_and_remove_prev_data(s_simulator, command->time);
+	}
+}
+
+static void	clear(struct session_simulator *s_simulator)
 {
 	int	i;
 
-	if (file_data)
+	if (s_simulator)
 	{
-		if (file_data->m_data)
-			free(file_data->m_data);
 		for (i = 0; i < BUFF_LENGTH; i++)
-			pthread_mutex_destroy(&file_data->buffers[i].lock);
-		if (file_data->log_files)
-			list_free(file_data->log_files);
-		free(file_data);
+			pthread_mutex_destroy(&s_simulator->buffers[i].lock);
+		if (s_simulator->log_files)
+			list_free(s_simulator->log_files);
+		free(s_simulator);
 	}
 }
 
-void	command_do(char *command)
+struct session_simulator*	get_simulator(void)
 {
-	pthread_t			read_thread_id, write_thread_id;
-	struct save_file	*file_data;
+	static struct session_simulator	*ret;
+	int								i;
 
-	file_data = setup(command);
-	if (file_data->files_length != 0)
+	if (ret == NULL)
 	{
-		log_message(LOG_INFO, "thread init start!");
-		pthread_create(&read_thread_id, NULL, read_thread, file_data);
-		pthread_create(&write_thread_id, NULL, write_thread, file_data);
+		ret = malloc(sizeof(struct session_simulator));
+		assert(ret != NULL);
+		memset(ret, 0, sizeof(struct session_simulator));
+		for (i = 0; i < BUFF_LENGTH; i++)
+		{
+			ret->buffers[i].status = EMPTY;
+			pthread_mutex_init(&ret->buffers[i].lock, NULL);
+		}
+		ret->m_data[CUR] = malloc(sizeof(struct minute_data));
+		ret->m_data[NEXT] = malloc(sizeof(struct minute_data));
+		ret->err_code = NONE;
+	}
+	return (ret);
+}
+
+void	command_do(struct command *command)
+{
+	pthread_t					read_thread_id, write_thread_id;
+	struct session_simulator	*s_simulator;
+
+	s_simulator = get_simulator();
+	setup(s_simulator, command);
+	if (s_simulator->files_length != 0)
+	{
+		DEBUG_LOG("thread init start!");
+		pthread_create(&read_thread_id, NULL, read_thread, s_simulator);
+		pthread_create(&write_thread_id, NULL, write_thread, s_simulator);
 		pthread_join(read_thread_id, NULL);
 		pthread_join(write_thread_id, NULL);
-		log_message(LOG_INFO, "thread join complete");
+		DEBUG_LOG("thread join complete!");
 	}
-	clear(file_data);
+	if (s_simulator->err_code != NONE)
+	{
+		// save_error_file(log_data->err_code);
+		s_simulator->err_code = NONE;
+	}
+	clear(s_simulator);
 }
 
 char*	command_read(char *file_path)
@@ -146,39 +180,67 @@ char*	command_read(char *file_path)
 	fp = fopen(file_path, "r");
 	if (fp == NULL)
 	{
-		log_message(LOG_WARNING, "File Open : %s\n", file_path);
+		log_message(LOG_WARNING, "Failed File Open : %s\n", file_path);
 		return (NULL);
 	}
 	file_size = get_file_size(fp);
 	file_data = malloc(file_size + 1);
+	assert(file_data != NULL);
 	read_size = fread(file_data, file_size, 1, fp);
 	if (read_size == 1)
 		file_data[file_size] = '\0';
 	else
 		file_data[read_size] = '\0';
     fclose(fp);
-	log_message(LOG_INFO, "command read complete");
+	DEBUG_LOG("command read complete");
 	return (file_data);
 }
 
-char*	command_parsing(char *file_data)
+struct command*	command_init(char *file_data)
 {
-	return (file_data);
+	int				i;
+	int				*value;
+	char			**tokens;
+	struct command	*ret;
+
+	ret = malloc(sizeof(struct command));
+	assert(ret != NULL);
+	tokens = ntk_strsplit(file_data, ',');
+	ret->userid = atoi(tokens[0]);
+	ret->time = atoi(tokens[1]);
+	for (i = 2; tokens[i] != NULL; i++)
+	{
+		value = malloc(sizeof(int));
+		*value = atoi(tokens[i]);
+		ret->cid_list = list_push(ret->cid_list, value);
+	}
+	return (ret);
+}
+
+void	command_free(struct command *command)
+{
+	if (command)
+	{
+		if (command->cid_list)
+			list_free(command->cid_list);
+		free(command);
+	}
 }
 
 void	command_check(char *directory_path, char *filename)
 {
 	char			file_path[PATH_MAX];
 	char			*file_data;
-	char			*command;
+	struct command	*command;
 
-	log_message(LOG_INFO, "test~~");
+	DEBUG_LOG("command_check");
     snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, filename);
 	file_data = command_read(file_path);
 	if (file_data == NULL)
 		return;
-	command = command_parsing(file_data);
+	command = command_init(file_data);
 	command_do(command);
+	command_free(command);
 	free(file_data);
 }
 
@@ -190,17 +252,18 @@ void	command_inotify(char *directory_path)
 
 	inotify_fd = inotify_init();
     if (inotify_fd < 0)
-		log_message(LOG_ERROR, "inotify_init failed");
+		log_message(LOG_ERROR, "Failed inotify_init");
 	log_message(LOG_INFO, "inotify start!");
     wd = inotify_add_watch(inotify_fd, directory_path, IN_CREATE);
     if (wd < 0)
-		log_message(LOG_ERROR, "inotify_add_watch failed");
+		log_message(LOG_ERROR, "Failed inotify_add_watch");
 	force_quit = false;
     while (!force_quit) {
 		length = read(inotify_fd, buffer, EVENT_BUFFER_SIZE);
 		if (length < 0)
 		{
-			log_message(LOG_WARNING, "inotify_fd read failed");
+			if (!force_quit)
+				log_message(LOG_WARNING, "Failed inotify_fd read");
 			break ;
 		}
 		i = 0;

@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/18 18:45:31 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/19 18:30:40 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,12 @@
 # define MAX_CID_SIZE			5000
 # define SECOND					60
 # define BUFF_LENGTH			2
+# define BUFF_MINUTE			2
 # include "raw_file_type.h"
 # include "list.h"
 # include "string_utils.h"
 # include "log.h"
+# include "error.h"
 # include <time.h>
 # include <stdlib.h>
 # include <stdio.h>
@@ -45,6 +47,12 @@ enum	e_file_status
 	NEW,
 	END,
 	EMPTY
+};
+
+enum	minute_index
+{
+	CUR,
+	NEXT
 };
 
 struct second_data_byte
@@ -72,19 +80,30 @@ struct buffer
 	enum e_file_status	status;
 };
 
-struct save_file
+struct session_simulator
 {
 	List				*log_files;
-	int					files_length;
+	List				*cid_list;
 	struct tm			start_tm;
 	struct tm			end_tm;
-	struct minute_data	*m_data;
+	struct minute_data	m_data[BUFF_MINUTE];
 	struct buffer		buffers[BUFF_LENGTH];
+	int					user_id;
+	int					files_length;
+	error_code			err_code;
+};
+
+struct command
+{
+	int					userid;
+	unsigned long long	time;
+	List				*cid_list;
 };
 
 long	get_file_size(FILE *file);
 void*	read_thread(void *arg);
 void*	write_thread(void *arg);
+char*	make_filename(int user_id);
 
 extern bool	force_quit;
 
