@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/20 19:15:39 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 19:26:19 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,14 +156,16 @@ void	command_do(struct command *command, error_code *err_code)
 		pthread_create(&write_thread_id, NULL, write_thread, s_simulator);
 		pthread_join(read_thread_id, &read_retval);
 		pthread_join(write_thread_id, &write_retval);
-		if (*err_code == NONE && *(error_code *)read_retval != NONE)
+		if (read_retval)
 		{
-			*err_code = *(error_code *)read_retval;
+			if (*(error_code *)read_retval != NONE)
+				*err_code = *(error_code *)read_retval;
 			free(read_retval);
 		}
-		if (*err_code == NONE && *(error_code *)write_retval != NONE)
+		if (write_retval)
 		{
-			*err_code = *(error_code *)write_retval;
+			if (*err_code == NONE && *(error_code *)write_retval != NONE)
+				*err_code = *(error_code *)write_retval;
 			free(write_retval);
 		}
 		DEBUG_LOG("thread join complete!");
