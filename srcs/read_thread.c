@@ -6,11 +6,10 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 13:17:17 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 18:22:19 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "error.h"
 #include "session_log.h"
 
 long	get_file_size(FILE *file) {
@@ -25,43 +24,46 @@ long	get_file_size(FILE *file) {
 
 void*	read_thread(void *arg)
 {
-	struct save_file	*file_data = arg;
-	int					buffer_id, read_size, file_size;
-	List				*cur;
-	FILE				*fp;
+	struct session_simulator	*s_simulator = arg;
+	int							buffer_id, read_size, file_size;
+	List						*cur;
+	FILE						*fp;
+	error_code					*err_code;
 
+	err_code = malloc(sizeof(error_code));
+	assert(err_code != NULL);
+	*err_code = NONE;
 	buffer_id = 0;
-	cur = file_data->log_files;
-	while (cur != NULL)
+	for (cur = s_simulator->log_files; cur != NULL; cur = cur->next)
 	{
 		fp = fopen(cur->value, "r");
 		if (fp == NULL)
 		{
 			log_message(LOG_ERROR, "File Open : %s\n", (char *)cur->value);
-			return (NULL);
-			// return (create_error(ERROR_FILE_NOT_FOUND));
+			*err_code = ERROR_FILE_NOT_FOUND;
+			break;
 		}
 		file_size = get_file_size(fp);
-		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
-		pthread_mutex_lock(&file_data->buffers[buffer_id].lock);
-		if (file_data->buffers[buffer_id].status == EMPTY)
+		pthread_mutex_lock(&s_simulator->buffers[buffer_id].lock);
+		if (s_simulator->buffers[buffer_id].status == EMPTY)
 		{
-			file_data->buffers[buffer_id].b_data = malloc(file_size);
-			assert(file_data->buffers[buffer_id].b_data != NULL);
-			read_size = fread(file_data->buffers[buffer_id].b_data, file_size, 1, fp);
+			s_simulator->buffers[buffer_id].b_data = malloc(file_size);
+			assert(s_simulator->buffers[buffer_id].b_data != NULL);
+			read_size = fread(s_simulator->buffers[buffer_id].b_data, file_size, 1, fp);
 			DEBUG_LOG("Read File - %s, Size - %d, Full Read - %s", (char *)cur->value, file_size, read_size == 1 ? "true" : "false");
 			if (read_size == 1)
-				file_data->buffers[buffer_id].read_size = file_size;
+				s_simulator->buffers[buffer_id].read_size = file_size;
 			else
-				file_data->buffers[buffer_id].read_size = read_size;
-			file_data->buffers[buffer_id].status = NEW;
-			if (cur->next == NULL)
-				file_data->buffers[buffer_id].status = END;
+				s_simulator->buffers[buffer_id].read_size = read_size;
+			s_simulator->buffers[buffer_id].status = NEW;
 		}
-		pthread_mutex_unlock(&file_data->buffers[buffer_id].lock);
+		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 		fclose(fp);
-		cur = cur->next;
+		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 	}
+	pthread_mutex_lock(&s_simulator->buffers[buffer_id].lock);
+	s_simulator->buffers[buffer_id].status = END;
+	pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 	DEBUG_LOG("read_thread end");
-	return (NULL);
+	return (err_code);
 }

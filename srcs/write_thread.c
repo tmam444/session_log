@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 17:06:52 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 19:20:40 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,8 @@
 
 char*	make_filename(int user_id)
 {
-	const char	*path = "/usr/lib/qosd/tmp";
+	// const char	*path = "/usr/lib/qosd/tmp";
+	const char	*path = "/home/chulee/session_log/temp";
 	const int	cmd_number = 99;
 	const int	filename_len = PATH_MAX;
 	char		*filename;
@@ -28,15 +29,13 @@ char*	make_filename(int user_id)
 
 static void	save_second_file(struct minute_data *m_data, int second, int user_id)
 {
-	struct tm	empty_tm = {0};
 	char		*filename;
 	FILE		*fp;
 	int			i;
 
-	if (memcmp(&empty_tm, &m_data->time_info, sizeof(struct tm)) == 0)
-		return;
 	filename = make_filename(user_id);
 	fp = fopen(filename, "w");
+	printf("second = %d, user_id = %d\n", second, user_id);
 	for (i = 0; i < MAX_CID_SIZE; i++)
 		if (m_data->s_data[second].internal[i].total_byte != 0)
 			fprintf(fp, "%d,%llu,%llu\n", i, m_data->s_data[second].internal[i].total_byte, m_data->s_data[second].external[i].total_byte);
@@ -71,22 +70,26 @@ static void	save_data(void *buffer, struct minute_data *m_data)
 	}
 }
 
-static bool	read_header(unsigned char *buff, struct session_simulator *s_simulator, int *buffer_index)
+static void	read_header(unsigned char *buff, struct session_simulator *s_simulator, int *buffer_index, \
+						enum e_minute_index *m_index, error_code *err_code)
 {
 	struct RawFileHeader2_t	*header = (struct RawFileHeader2_t *)buff;
-	time_t					header_time, start_time;
+	time_t					header_time, s_time_minus_sec;
 
 	assert(s_simulator != NULL && buff != NULL && buffer_index != NULL);
-	start_time = mktime(&s_simulator->start_tm) - s_simulator->start_tm.tm_sec;
+	s_time_minus_sec = s_simulator->stime - (s_simulator->stime % 60);
 	header_time = header->time;
-	if (start_time != header_time)
+	if (header_time == s_time_minus_sec)
+		*m_index = CUR;
+	else if (header_time == s_time_minus_sec + 60)
+		*m_index = NEXT;
+	else
 	{
 		log_message(LOG_WARNING, "header time is not equals");
-		return (ERROR_FILE_HEADER);
+		*err_code = ERROR_FILE_HEADER;
+		return ;
 	}
-	localtime_r(&header_time, &s_simulator->m_data.time_info);
 	*buffer_index += HEADER_SIZE;
-	return (true);
 }
 
 static void	read_data(struct buffer *buff, int *buffer_index, struct minute_data *m_data)
@@ -100,28 +103,35 @@ static void	read_data(struct buffer *buff, int *buffer_index, struct minute_data
 void*	write_thread(void *arg)
 {
 	struct session_simulator	*s_simulator = arg;
+	bool						is_end = false;
 	int							buffer_id, buffer_index;
+	enum e_minute_index			m_index;
+	error_code					*err_code;
 
+	err_code = malloc(sizeof(error_code));
+	assert(err_code != NULL);
+	*err_code = NONE;
 	buffer_id = 0;
-	while (true)
+	while (!is_end && *err_code == NONE)
 	{
 		buffer_index = 0;
-		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 		pthread_mutex_lock(&s_simulator->buffers[buffer_id].lock);
-		if (s_simulator->buffers[buffer_id].status != EMPTY)
+		if (s_simulator->buffers[buffer_id].status == NEW)
 		{
-			if (!read_header(s_simulator->buffers[buffer_id].b_data, s_simulator, &buffer_index))
-				break ;
-			read_data(&s_simulator->buffers[buffer_id], &buffer_index, &s_simulator->m_data);
+			read_header(s_simulator->buffers[buffer_id].b_data, s_simulator, &buffer_index, &m_index, err_code);
+			if (*err_code != NONE)
+				read_data(&s_simulator->buffers[buffer_id], &buffer_index, &s_simulator->m_data[m_index]);
 			free(s_simulator->buffers[buffer_id].b_data);
-			if (s_simulator->buffers[buffer_id].status == END)
-				break ;
 			s_simulator->buffers[buffer_id].status = EMPTY;
 		}
+		else if (s_simulator->buffers[buffer_id].status == END)
+			is_end = true;
 		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
+		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 	}
 	DEBUG_LOG("read data complete, file creation!");
-	save_second_file(&s_simulator->m_data, s_simulator->start_tm.tm_sec);
+	if (*err_code == NONE)
+		save_second_file(&s_simulator->m_data[m_index], s_simulator->stime % 60, s_simulator->user_id);
 	DEBUG_LOG("write thread end");
-	return (EXIT_SUCCESS);
+	return (err_code);
 }

@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 18:30:40 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 18:53:31 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 # define SECOND					60
 # define BUFF_LENGTH			2
 # define BUFF_MINUTE			2
+# define ERROR_FILE_NUMBER		999
 # include "raw_file_type.h"
 # include "list.h"
 # include "string_utils.h"
@@ -49,7 +50,7 @@ enum	e_file_status
 	EMPTY
 };
 
-enum	minute_index
+enum	e_minute_index
 {
 	CUR,
 	NEXT
@@ -68,7 +69,6 @@ struct second_data
 
 struct minute_data
 {
-	struct tm			time_info;
 	struct second_data	s_data[SECOND];
 };
 
@@ -84,20 +84,18 @@ struct session_simulator
 {
 	List				*log_files;
 	List				*cid_list;
-	struct tm			start_tm;
-	struct tm			end_tm;
+	time_t				stime;
 	struct minute_data	m_data[BUFF_MINUTE];
 	struct buffer		buffers[BUFF_LENGTH];
 	int					user_id;
 	int					files_length;
-	error_code			err_code;
 };
 
 struct command
 {
-	int					userid;
-	unsigned long long	time;
-	List				*cid_list;
+	int		user_id;
+	time_t	time;
+	List	*cid_list;
 };
 
 long	get_file_size(FILE *file);
@@ -105,6 +103,6 @@ void*	read_thread(void *arg);
 void*	write_thread(void *arg);
 char*	make_filename(int user_id);
 
-extern bool	force_quit;
+extern bool			force_quit;
 
 #endif

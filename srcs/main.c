@@ -6,13 +6,13 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 19:06:57 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 19:15:39 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 
-bool	force_quit;
+bool		force_quit;
 
 static bool	check_file_name(struct tm *search_tm, char *file_name)
 {
@@ -28,38 +28,38 @@ static bool	check_file_name(struct tm *search_tm, char *file_name)
 	{
 		file_hour = atoi(tokens[2]);
 		file_minute = atoi(tokens[3]);
-		if (search_tm->tm_hour == file_hour && search_tm->tm_min + 1 == file_minute)
+		if (search_tm->tm_hour == file_hour && search_tm->tm_min == file_minute)
 			ret = true;
 	}
 	ntk_strsplit_free(tokens);
 	return (ret);
 }
 
-static void	find_files(struct session_simulator *s_simulator, struct tm *search_time)
+static void	find_session_files(struct session_simulator *s_simulator, const time_t search_time, error_code *err_code)
 {
 	// const char		*path = "/var/qosd/log/raw";
 	const char		*path = "/home/chulee/session_log/data";
-	char			directory_path[512], file_path[1024];
+	struct tm		search_tm;
+	char			directory_path[PATH_MAX], file_path[PATH_MAX * 2];
 	DIR				*dir;
     struct dirent	*entry;
-	List			*temp, *new_log_files = NULL;
 
+	localtime_r(&search_time, &search_tm);
 	snprintf(directory_path, sizeof(directory_path), "%s/%04d/%02d/%02d", \
-				path, s_simulator->start_tm.tm_year + 1900, s_simulator->start_tm.tm_mon + 1, s_simulator->start_tm.tm_mday);
+			path, search_tm.tm_year + 1900, search_tm.tm_mon + 1, search_tm.tm_mday);
 	dir = opendir(directory_path);
 	if (dir == NULL)
 	{
 		log_message(LOG_WARNING, "Failed Directory Open - %s", directory_path);
-		s_simulator->err_code = ERROR_DIRECTORY_NOT_FOUND;
+		*err_code = ERROR_DIRECTORY_NOT_FOUND;
 		return;
 	}
 	while ((entry = readdir(dir)) != NULL)
 	{
-		if (check_file_name(search_time, entry->d_name))
+		if (check_file_name(&search_tm, entry->d_name))
 		{
 			snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, entry->d_name);
 			DEBUG_LOG("ADD File - %s", file_path);
-			new_log_files = list_push(new_log_files, ntk_strdup(file_path));
 			s_simulator->log_files = list_push(s_simulator->log_files, ntk_strdup(file_path));
 			s_simulator->files_length++;
 		}
@@ -67,62 +67,43 @@ static void	find_files(struct session_simulator *s_simulator, struct tm *search_
     closedir(dir);
 }
 
-static void	date_init(struct session_simulator *s_simulator, time_t start_time)
+void	update_time_and_find_session_files(struct session_simulator *s_simulator, struct command *command, error_code *err_code)
 {
-	time_t		end_time;
+	time_t		s_time_minus_sec;
 
-	localtime_r(&start_time, &s_simulator->start_tm);
-	end_time = start_time + 60;
-	localtime_r(&end_time, &s_simulator->end_tm);
-}
-
-void	update_time_and_remove_prev_data(struct session_simulator *s_simulator, time_t new_time)
-{
-	time_t	start_time;
-
-	start_time = mktime(&s_simulator->start_tm) - s_simulator->start_tm.tm_sec;
-	if (start_time <= new_time && new_time < start_time + 120)
+	s_time_minus_sec = s_simulator->stime - (s_simulator->stime % 60);
+	s_simulator->stime = command->time;
+	if (s_time_minus_sec <= command->time && command->time < s_time_minus_sec + 60)
 	{
-		if (new_time < start_time + 60)
-			return ;
-		else
-		{
-			memcpy(&s_simulator->m_data[CUR], &s_simulator->m_data[NEXT], sizeof(struct minute_data));
-			memset(&s_simulator->m_data[NEXT], 0, sizeof(struct minute_data));
-			date_init(s_simulator, new_time);
-			find_files(s_simulator, &s_simulator->end_tm);
-		}
+		DEBUG_LOG("EQUALS CUR MINUTE TIME");
 	}
-}
-
-static void setup(struct session_simulator *s_simulator, struct command *command)
-{
-	const struct tm	empty_tm = {0};
-
-	if (memcmp(&s_simulator->start_tm, &empty_tm, sizeof(struct tm)) == 0)
+	else if (s_time_minus_sec - 60 <= command->time && command->time < s_time_minus_sec)
 	{
-		date_init(s_simulator, command->time);
-		find_files(s_simulator, &s_simulator->start_tm);
-		find_files(s_simulator, &s_simulator->end_tm);
+		DEBUG_LOG("GET PREV MINUTE TIME FILE");
+		memcpy(&s_simulator->m_data[NEXT], &s_simulator->m_data[CUR], sizeof(struct minute_data));
+		memset(&s_simulator->m_data[CUR], 0, sizeof(struct minute_data));
+		find_session_files(s_simulator, command->time - 60, err_code);
+	}
+	else if (s_time_minus_sec + 60 <= command->time && command->time < s_time_minus_sec + 120)
+	{
+		DEBUG_LOG("GET NEXT MINUTE TIME FILE");
+		memcpy(&s_simulator->m_data[CUR], &s_simulator->m_data[NEXT], sizeof(struct minute_data));
+		memset(&s_simulator->m_data[NEXT], 0, sizeof(struct minute_data));
+		find_session_files(s_simulator, command->time + 60, err_code);
 	}
 	else
 	{
-		update_time_and_remove_prev_data(s_simulator, command->time);
+		DEBUG_LOG("GET NEW MINUTE TIME FILE");
+		find_session_files(s_simulator, command->time, err_code);
+		if (*err_code == NONE)
+			find_session_files(s_simulator, command->time + 60, err_code);
 	}
 }
 
-static void	clear(struct session_simulator *s_simulator)
+static void setup(struct session_simulator *s_simulator, struct command *command, error_code *err_code)
 {
-	int	i;
-
-	if (s_simulator)
-	{
-		for (i = 0; i < BUFF_LENGTH; i++)
-			pthread_mutex_destroy(&s_simulator->buffers[i].lock);
-		if (s_simulator->log_files)
-			list_free(s_simulator->log_files);
-		free(s_simulator);
-	}
+	s_simulator->user_id = command->user_id;
+	update_time_and_find_session_files(s_simulator, command, err_code);
 }
 
 struct session_simulator*	get_simulator(void)
@@ -140,38 +121,59 @@ struct session_simulator*	get_simulator(void)
 			ret->buffers[i].status = EMPTY;
 			pthread_mutex_init(&ret->buffers[i].lock, NULL);
 		}
-		ret->m_data[CUR] = malloc(sizeof(struct minute_data));
-		ret->m_data[NEXT] = malloc(sizeof(struct minute_data));
-		ret->err_code = NONE;
 	}
 	return (ret);
 }
 
-void	command_do(struct command *command)
+static void	clear(void)
+{
+	struct session_simulator	*s_simulator = get_simulator();
+	int							i;
+
+	if (s_simulator)
+	{
+		for (i = 0; i < BUFF_LENGTH; i++)
+			pthread_mutex_destroy(&s_simulator->buffers[i].lock);
+		if (s_simulator->log_files)
+			list_free(s_simulator->log_files);
+		free(s_simulator);
+	}
+}
+
+void	command_do(struct command *command, error_code *err_code)
 {
 	pthread_t					read_thread_id, write_thread_id;
 	struct session_simulator	*s_simulator;
+	void						*read_retval = NULL;
+	void						*write_retval = NULL;
 
 	s_simulator = get_simulator();
-	setup(s_simulator, command);
-	if (s_simulator->files_length != 0)
+	setup(s_simulator, command, err_code);
+	if (*err_code == NONE && s_simulator->files_length != 0)
 	{
 		DEBUG_LOG("thread init start!");
 		pthread_create(&read_thread_id, NULL, read_thread, s_simulator);
 		pthread_create(&write_thread_id, NULL, write_thread, s_simulator);
-		pthread_join(read_thread_id, NULL);
-		pthread_join(write_thread_id, NULL);
+		pthread_join(read_thread_id, &read_retval);
+		pthread_join(write_thread_id, &write_retval);
+		if (*err_code == NONE && *(error_code *)read_retval != NONE)
+		{
+			*err_code = *(error_code *)read_retval;
+			free(read_retval);
+		}
+		if (*err_code == NONE && *(error_code *)write_retval != NONE)
+		{
+			*err_code = *(error_code *)write_retval;
+			free(write_retval);
+		}
 		DEBUG_LOG("thread join complete!");
 	}
-	if (s_simulator->err_code != NONE)
-	{
-		// save_error_file(log_data->err_code);
-		s_simulator->err_code = NONE;
-	}
-	clear(s_simulator);
+	list_free(s_simulator->log_files);
+	s_simulator->log_files = NULL;
+	s_simulator->files_length = 0;
 }
 
-char*	command_read(char *file_path)
+char*	command_read(char *file_path, error_code *err_code)
 {
 	char		*file_data;
 	ssize_t		read_size, file_size;
@@ -180,7 +182,8 @@ char*	command_read(char *file_path)
 	fp = fopen(file_path, "r");
 	if (fp == NULL)
 	{
-		log_message(LOG_WARNING, "Failed File Open : %s\n", file_path);
+		log_message(LOG_WARNING, "Failed File Open : %s", file_path);
+		*err_code = ERROR_FILE_NOT_FOUND;
 		return (NULL);
 	}
 	file_size = get_file_size(fp);
@@ -196,24 +199,38 @@ char*	command_read(char *file_path)
 	return (file_data);
 }
 
-struct command*	command_init(char *file_data)
+struct command*	command_init(char *file_data, error_code *err_code)
 {
-	int				i;
+	int				i, token_size = 0;
 	int				*value;
 	char			**tokens;
 	struct command	*ret;
 
+	DEBUG_LOG("file_data = %s", file_data);
 	ret = malloc(sizeof(struct command));
+	memset(ret, 0, sizeof(struct command));
 	assert(ret != NULL);
 	tokens = ntk_strsplit(file_data, ',');
-	ret->userid = atoi(tokens[0]);
-	ret->time = atoi(tokens[1]);
-	for (i = 2; tokens[i] != NULL; i++)
+	while (tokens[token_size] != NULL)
+		token_size++;
+	DEBUG_LOG("token size = %d", token_size);
+	if (token_size < 3)
 	{
-		value = malloc(sizeof(int));
-		*value = atoi(tokens[i]);
-		ret->cid_list = list_push(ret->cid_list, value);
+		log_message(LOG_WARNING, "cmd file data error, data : %s", file_data);
+		*err_code = ERROR_CMD_DATA;
 	}
+	else
+	{
+		ret->user_id = atoi(tokens[0]);
+		ret->time = atoi(tokens[1]);
+		for (i = 2; tokens[i] != NULL; i++)
+		{
+			value = malloc(sizeof(int));
+			*value = atoi(tokens[i]);
+			ret->cid_list = list_push(ret->cid_list, value);
+		}
+	}
+	ntk_strsplit_free(tokens);
 	return (ret);
 }
 
@@ -227,25 +244,41 @@ void	command_free(struct command *command)
 	}
 }
 
-void	command_check(char *directory_path, char *filename)
+void	command_check(const char *cmd_directory_path, char *filename)
 {
 	char			file_path[PATH_MAX];
 	char			*file_data;
 	struct command	*command;
+	error_code		err_code = NONE;
 
 	DEBUG_LOG("command_check");
-    snprintf(file_path, sizeof(file_path), "%s/%s", directory_path, filename);
-	file_data = command_read(file_path);
-	if (file_data == NULL)
+    snprintf(file_path, sizeof(file_path), "%s/%s", cmd_directory_path, filename);
+	file_data = command_read(file_path, &err_code);
+	if (err_code != NONE)
+	{
+		create_error_file(err_code);
 		return;
-	command = command_init(file_data);
-	command_do(command);
-	command_free(command);
+	}
+	command = command_init(file_data, &err_code);
 	free(file_data);
+	if (err_code != NONE)
+	{
+		create_error_file(err_code);
+		return;
+	}
+	command_do(command, &err_code);
+	command_free(command);
+	if (err_code != NONE)
+	{
+		create_error_file(err_code);
+		return;
+	}
 }
 
-void	command_inotify(char *directory_path)
+void	command_inotify(void)
 {
+	// const char				*cmd_directory_path = "/usr/lib/qosd/tmp";
+	const char				*cmd_directory_path = "/home/chulee/session_log/command";
     unsigned char			buffer[EVENT_BUFFER_SIZE];
 	int						inotify_fd, wd, i, length;
 	struct inotify_event	*event;
@@ -254,7 +287,7 @@ void	command_inotify(char *directory_path)
     if (inotify_fd < 0)
 		log_message(LOG_ERROR, "Failed inotify_init");
 	log_message(LOG_INFO, "inotify start!");
-    wd = inotify_add_watch(inotify_fd, directory_path, IN_CREATE);
+    wd = inotify_add_watch(inotify_fd, cmd_directory_path, IN_CREATE);
     if (wd < 0)
 		log_message(LOG_ERROR, "Failed inotify_add_watch");
 	force_quit = false;
@@ -270,7 +303,7 @@ void	command_inotify(char *directory_path)
 		while (i < length) {
 			event = (struct inotify_event *)&buffer[i];
 			if (event->mask & IN_CREATE)
-				command_check(directory_path, event->name);
+				command_check(cmd_directory_path, event->name);
 			i += EVENT_SIZE + event->len;
 		}
     }
@@ -284,12 +317,11 @@ void	program_exit(int signum)
 	force_quit = true;
 }
 
-int	main(int argc, char *argv[])
+int	main(void)
 {
-	if (argc != 2)
-		log_message(LOG_ERROR, "Usage - %s directory_path", argv[0]);
 	signal(SIGINT, program_exit);
 	signal(SIGQUIT, program_exit);
-	command_inotify(argv[1]);
+	command_inotify();
+	clear();
 	return (EXIT_SUCCESS);
 }

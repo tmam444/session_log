@@ -6,35 +6,31 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 15:27:23 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/20 18:54:04 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "error.h"
 #include "session_log.h"
 
 static const char	*error_msg[] = {
-	"Date Parsing Error",
-	"Session Log File Not found",
-	"File Header Time is not equals",
-	"Unknown Daemon Error, See Daemon Log"
+	"Date parsing error",
+	"Session directory not found",
+	"Session log file not found",
+	"File header time is not equals",
+	"Session log file name is wrong",
+	"Unknown Daemon Error, See Daemon Log",
+	"Cmd data is wrong"
 };
 
-
-static void	save_error_file(error_code code, int user_id)
+void	create_error_file(error_code code)
 {
 	char	*filename;
+	FILE		*fp;
 
-	filename = make_filename(user_id);
-}
-
-Error*	create_error(error_code code)
-{
-	Error				*ret;
-
-	ret = malloc(sizeof(Error));
-	assert(ret != NULL);
-	ret->code = code;
-	ret->message = error_msg[code];
-	return (ret);
+	filename = make_filename(ERROR_FILE_NUMBER);
+	fp = fopen(filename, "w");
+	fprintf(fp, "%d,%s\n", code, error_msg[code]);
+	free(filename);
+	fclose(fp);
+	DEBUG_LOG("error! code = %d, msg = %s", code, error_msg[code]);
 }
