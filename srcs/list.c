@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/31 11:05:57 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/05 13:31:24 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/21 15:50:13 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,29 @@ static List*	list_create(void *value)
 	return (ret);
 }
 
-List*	list_push(List *lst, void *value)
+List*	list_push_front(List *lst, void *value)
 {
 	List	*ret;
 
 	ret = list_create(value);
 	ret->next = lst;
 	return (ret);
+}
+
+List*	list_push_back(List *lst, void *value)
+{
+	List	*temp;
+
+	if (lst == NULL)
+		return (list_create(value));
+	else
+	{
+		temp = lst;
+		while (temp->next != NULL)
+			temp = temp->next;
+		temp->next = list_create(value);
+	}
+	return (lst);
 }
 
 int		list_length(List *lst)

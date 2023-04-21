@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/29 18:49:44 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/05 13:31:15 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/21 15:50:24 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,8 @@ typedef struct List {
 } List;
 
 
-List*	list_push(List *lst, void *value);
+List*	list_push_front(List *lst, void *value);
+List*	list_push_back(List *lst, void *value);
 List*	list_pop(List *lst, void **value);
 int		list_length(List *lst);
 void	list_free(List *lst);

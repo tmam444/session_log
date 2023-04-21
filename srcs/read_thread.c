@@ -6,13 +6,14 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/20 18:22:19 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/21 18:32:04 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 
-long	get_file_size(FILE *file) {
+long	get_file_size(FILE *file)
+{
 	long current_position, file_size;
 
 	current_position = ftell(file);

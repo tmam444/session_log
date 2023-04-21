@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/20 18:53:31 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/21 16:56:16 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # define FILE_READ_BUFFER_SIZE	1024
 # define HEADER_SIZE			sizeof(struct RawFileHeader2_t)
 # define DATA_SIZE				sizeof(struct RawDataVer2_t)
+# define MAX_SEG_SIZE			8
 # define MAX_CID_SIZE			5000
 # define SECOND					60
 # define BUFF_LENGTH			2
@@ -56,6 +57,14 @@ enum	e_minute_index
 	NEXT
 };
 
+enum	e_time
+{
+	PREV_TIME,
+	CUR_TIME,
+	NEXT_TIME,
+	ANOTHER_TIME
+};
+
 struct second_data_byte
 {
 	unsigned long long	total_byte;
@@ -67,9 +76,16 @@ struct second_data
 	struct second_data_byte	external[MAX_CID_SIZE];
 };
 
+struct total_data
+{
+	struct second_data_byte	internal;
+	struct second_data_byte	external;
+};
+
 struct minute_data
 {
-	struct second_data	s_data[SECOND];
+	struct second_data		s_data[MAX_SEG_SIZE][SECOND];
+	struct total_data		t_data[MAX_SEG_SIZE][SECOND];
 };
 
 struct buffer
@@ -87,8 +103,8 @@ struct session_simulator
 	time_t				stime;
 	struct minute_data	m_data[BUFF_MINUTE];
 	struct buffer		buffers[BUFF_LENGTH];
+	bool				now_cached;
 	int					user_id;
-	int					files_length;
 };
 
 struct command
@@ -101,7 +117,8 @@ struct command
 long	get_file_size(FILE *file);
 void*	read_thread(void *arg);
 void*	write_thread(void *arg);
-char*	make_filename(int user_id);
+char*	make_real_filename(int user_id);
+char*	make_temp_filename(int user_id);
 
 extern bool			force_quit;
 
