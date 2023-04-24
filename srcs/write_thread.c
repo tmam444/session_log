@@ -6,72 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/21 16:56:08 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 18:43:03 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
-
-char*	make_real_filename(int user_id)
-{
-	// const char	*path = "/usr/lib/qosd/tmp";
-	const char	*path = "/home/chulee/session_log/temp";
-	const int	cmd_number = 99;
-	const int	filename_len = PATH_MAX;
-	char		*filename;
-
-	filename = malloc(filename_len);
-	assert(filename != NULL);
-	memset(filename, 0, filename_len);
-	snprintf(filename, filename_len, "%s/real_result_%02d%02d", path, cmd_number, user_id);
-	return (filename);
-}
-
-char*	make_temp_filename(int user_id)
-{
-	// const char	*path = "/usr/lib/qosd/tmp";
-	const char	*path = "/home/chulee/session_log/temp";
-	const int	cmd_number = 99;
-	const int	filename_len = PATH_MAX;
-	char		*filename;
-
-	filename = malloc(filename_len);
-	assert(filename != NULL);
-	memset(filename, 0, filename_len);
-	snprintf(filename, filename_len, "%s/real_result_%02d%02d_tmp", path, cmd_number, user_id);
-	return (filename);
-}
-
-static void	save_data(void *buffer, struct minute_data *m_data)
-{
-	struct RawDataVer2_t	*data = buffer;
-	unsigned long long		start_time, end_time, int_per_second_byte, ext_per_second_byte, diff_time;
-
-	start_time = data->start_time < 60 ? data->start_time : 0;
-	end_time = data->end_time < 60 ? data->end_time : 59;
-	int_per_second_byte = data->int_byte.byte;
-	ext_per_second_byte = data->ext_byte.byte;
-	diff_time = end_time - start_time;
-	if (diff_time > 0)
-	{
-		if (int_per_second_byte > 0)
-			int_per_second_byte = int_per_second_byte / diff_time;
-		if (ext_per_second_byte > 0)
-			ext_per_second_byte = ext_per_second_byte / diff_time;
-	}
-	while (start_time <= end_time)
-	{
-		m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte += int_per_second_byte;
-		assert(m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte >= int_per_second_byte);
-		m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte += ext_per_second_byte;
-		assert(m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte >= ext_per_second_byte);
-		m_data->t_data[data->seg_num][start_time].internal.total_byte += int_per_second_byte;
-		assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
-		m_data->t_data[data->seg_num][start_time].external.total_byte += ext_per_second_byte;
-		assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
-		start_time++;
-	}
-}
 
 static void	read_header(unsigned char *buff, struct session_simulator *s_simulator,
 						enum e_minute_index *m_index, error_code *err_code)
@@ -90,16 +29,46 @@ static void	read_header(unsigned char *buff, struct session_simulator *s_simulat
 	{
 		log_message(LOG_WARNING, "header time is not equals, s_time = %lld, header_time = %lld", s_time_minus_sec, header_time);
 		*err_code = ERROR_FILE_HEADER;
+	
 		return ;
 	}
 }
 
 static void	read_data(struct buffer *buff, struct minute_data *m_data)
 {
-	int	i;
+	struct RawDataVer2_t	*data;
+	unsigned long long		start_time, end_time, int_per_second_byte, ext_per_second_byte, diff_time;
+	int						i;
 
 	for (i = HEADER_SIZE; i < buff->read_size; i += DATA_SIZE)
-		save_data(buff->b_data + i, m_data);
+	{
+		data = (struct RawDataVer2_t *)(buff->b_data + i);
+		start_time = data->start_time < 60 ? data->start_time : 0;
+		end_time = data->end_time < 60 ? data->end_time : 59;
+		int_per_second_byte = data->int_byte.byte;
+		ext_per_second_byte = data->ext_byte.byte;
+		diff_time = end_time - start_time;
+		if (diff_time > 0)
+		{
+			if (int_per_second_byte > 0)
+				int_per_second_byte = int_per_second_byte / diff_time;
+			
+			if (ext_per_second_byte > 0)
+				ext_per_second_byte = ext_per_second_byte / diff_time;
+		}
+		while (start_time <= end_time)
+		{
+			m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte += int_per_second_byte;
+			assert(m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte >= int_per_second_byte);
+			m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte += ext_per_second_byte;
+			assert(m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte >= ext_per_second_byte);
+			m_data->t_data[data->seg_num][start_time].internal.total_byte += int_per_second_byte;
+			assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
+			m_data->t_data[data->seg_num][start_time].external.total_byte += ext_per_second_byte;
+			assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
+			start_time++;
+		}
+	}
 }
 
 void*	write_thread(void *arg)

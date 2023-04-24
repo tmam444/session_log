@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:52:08 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/14 18:42:28 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 18:28:40 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,9 @@
 # include <stdlib.h>
 # include <string.h>
 # include <assert.h>
+# include <stdbool.h>
 
+bool	ntk_str_ends_with(const char *haystack, const char *needle);
 void    ntk_strsplit_free(char **str_splits);
 char**  ntk_strsplit(char const *s, char delimiter);
 char*   ntk_strjoin(char const *s1, char const *s2);

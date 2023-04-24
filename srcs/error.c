@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/21 19:02:10 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 16:20:29 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,27 +22,12 @@ static const char	*error_msg[] = {
 	"Cmd data is wrong"
 };
 
-char*	make_error_filename(void)
-{
-	// const char	*path = "/usr/lib/qosd/tmp";
-	const char	*path = "/home/chulee/session_log/temp";
-	const int	cmd_number = 99;
-	const int	filename_len = PATH_MAX;
-	char		*filename;
-
-	filename = malloc(filename_len);
-	assert(filename != NULL);
-	memset(filename, 0, filename_len);
-	snprintf(filename, filename_len, "%s/real_result_%02d.error", path, cmd_number);
-	return (filename);
-}
-
-void	create_error_file(error_code code)
+void	create_error_file(error_code code, int user_id)
 {
 	char	*filename;
-	FILE		*fp;
+	FILE	*fp;
 
-	filename = make_error_filename();
+	filename = make_real_filename(user_id);
 	fp = fopen(filename, "w");
 	fprintf(fp, "%d,%s\n", code, error_msg[code]);
 	free(filename);

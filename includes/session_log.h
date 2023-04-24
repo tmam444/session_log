@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/21 16:56:16 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 18:50:38 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,17 +96,6 @@ struct buffer
 	enum e_file_status	status;
 };
 
-struct session_simulator
-{
-	List				*log_files;
-	List				*cid_list;
-	time_t				stime;
-	struct minute_data	m_data[BUFF_MINUTE];
-	struct buffer		buffers[BUFF_LENGTH];
-	bool				now_cached;
-	int					user_id;
-};
-
 struct command
 {
 	int		user_id;
@@ -114,11 +103,27 @@ struct command
 	List	*cid_list;
 };
 
-long	get_file_size(FILE *file);
-void*	read_thread(void *arg);
-void*	write_thread(void *arg);
-char*	make_real_filename(int user_id);
-char*	make_temp_filename(int user_id);
+struct session_simulator
+{
+	pthread_mutex_t		lock;
+	List				*log_files;
+	time_t				stime;
+	struct minute_data	m_data[BUFF_MINUTE];
+	struct buffer		buffers[BUFF_LENGTH];
+	bool				is_cached;
+	bool				is_running;
+	struct command		*cmd;
+};
+
+struct session_simulator*	get_simulator(void);
+long						get_file_size(FILE *file);
+void						command_do(struct command *command, error_code *err_code);
+void*						command_thread(void *file_path);
+void*						read_thread(void *arg);
+void*						write_thread(void *arg);
+char*						make_real_filename(int user_id);
+char*						make_temp_filename(int user_id);
+char*						make_error_filename(int user_id);
 
 extern bool			force_quit;
 

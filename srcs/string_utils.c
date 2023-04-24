@@ -6,11 +6,26 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/03 15:23:51 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/21 18:33:01 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 18:28:43 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "string_utils.h"
+
+bool	ntk_str_ends_with(const char *haystack, const char *needle)
+{
+	bool	ret = false;
+	char	*temp;
+
+	temp = strstr(haystack, needle);
+	if (temp)
+	{
+		temp += strlen(needle);
+		if (*temp == '\0')
+			ret = true;
+	}
+	return (ret);
+}
 
 char*	ntk_strdup(const char *s1)
 {

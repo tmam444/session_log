@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 11:37:57 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/20 18:54:18 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 16:20:35 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,10 @@ typedef enum e_error {
 	ERROR_FILE_NAME,
 	ERROR_DAEMON,
 	ERROR_CMD_DATA,
+	ERROR_CMD_IS_RUNNING,
 	NONE
 } error_code;
 
-void	create_error_file(error_code code);
+void	create_error_file(error_code code, int user_id);
 
 #endif

@@ -6,22 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/21 18:32:04 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/24 16:43:40 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
-
-long	get_file_size(FILE *file)
-{
-	long current_position, file_size;
-
-	current_position = ftell(file);
-	fseek(file, 0, SEEK_END);
-    file_size = ftell(file);
-    fseek(file, current_position, SEEK_SET);
-    return (file_size);
-}
 
 void*	read_thread(void *arg)
 {
