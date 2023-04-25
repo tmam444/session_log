@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/12 15:27:16 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/13 18:28:14 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 # include <fcntl.h>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <arpa/inet.h>
 
 struct second_data_byte {
 	unsigned long long	total_byte;

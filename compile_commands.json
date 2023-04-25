@@ -2,46 +2,52 @@
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
       "-I./includes",
       "-c",
       "-o",
       "objs/main.o",
       "srcs/main.c"
     ],
-    "directory": "/home/chulee/session_log",
-    "file": "/home/chulee/session_log/srcs/main.c",
-    "output": "/home/chulee/session_log/objs/main.o"
+    "directory": "/home/chulee/test_log",
+    "file": "/home/chulee/test_log/srcs/main.c",
+    "output": "/home/chulee/test_log/objs/main.o"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
       "-I./includes",
       "-c",
       "-o",
       "objs/string_utils.o",
       "srcs/string_utils.c"
     ],
-    "directory": "/home/chulee/session_log",
-    "file": "/home/chulee/session_log/srcs/string_utils.c",
-    "output": "/home/chulee/session_log/objs/string_utils.o"
+    "directory": "/home/chulee/test_log",
+    "file": "/home/chulee/test_log/srcs/string_utils.c",
+    "output": "/home/chulee/test_log/objs/string_utils.o"
   },
   {
     "arguments": [
       "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
       "-I./includes",
       "-c",
       "-o",
       "objs/string_utils_itoa.o",
       "srcs/string_utils_itoa.c"
     ],
-    "directory": "/home/chulee/session_log",
-    "file": "/home/chulee/session_log/srcs/string_utils_itoa.c",
-    "output": "/home/chulee/session_log/objs/string_utils_itoa.o"
+    "directory": "/home/chulee/test_log",
+    "file": "/home/chulee/test_log/srcs/string_utils_itoa.c",
+    "output": "/home/chulee/test_log/objs/string_utils_itoa.o"
   }
 ]
