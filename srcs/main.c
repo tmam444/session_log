@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 13:12:49 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 14:38:34 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,21 +62,6 @@ static void	command_inotify(void)
     close(inotify_fd);
 }
 
-static void	clear(void)
-{
-	struct session_simulator	*s_simulator = get_simulator();
-	int							i;
-
-	if (s_simulator)
-	{
-		for (i = 0; i < BUFF_LENGTH; i++)
-			pthread_mutex_destroy(&s_simulator->buffers[i].lock);
-		if (s_simulator->log_files)
-			list_free(s_simulator->log_files);
-		free(s_simulator);
-	}
-}
-
 static void	program_exit(int signum)
 {
 	(void)signum;
@@ -89,6 +74,5 @@ int	main(void)
 	signal(SIGQUIT, program_exit);
 	get_simulator();
 	command_inotify();
-	clear();
 	return (EXIT_SUCCESS);
 }

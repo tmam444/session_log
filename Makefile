@@ -6,7 +6,7 @@
 #    By: chulee <chulee@nstek.com>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/03/21 14:04:03 by chulee            #+#    #+#              #
-#    Updated: 2023/04/25 13:09:10 by chulee           ###   ########.fr        #
+#    Updated: 2023/04/25 14:31:40 by chulee           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ SRCS=$(wildcard srcs/*.c)
 OBJS=$(addprefix objs/, $(notdir $(SRCS:.c=.o)))
 LOGS=$(wildcard log_file/*.txt)
 CC=cc
-INCLUDE=-fsanitize=thread -g -O3 -I./includes 
+INCLUDE=-O3 -I./includes 
 CFLAGS=-Wall -Wextra -Werror
 LDFLAGS=
 OBJ_FILES=$(OBJS)
