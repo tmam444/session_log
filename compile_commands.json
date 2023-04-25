@@ -1,9 +1,96 @@
 [
   {
     "arguments": [
-      "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/command_do.o",
+      "srcs/command_do.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/command_do.c",
+    "output": "/home/chulee/session_log/objs/command_do.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/command_thread.o",
+      "srcs/command_thread.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/command_thread.c",
+    "output": "/home/chulee/session_log/objs/command_thread.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/error.o",
+      "srcs/error.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/error.c",
+    "output": "/home/chulee/session_log/objs/error.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/list.o",
+      "srcs/list.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/list.c",
+    "output": "/home/chulee/session_log/objs/list.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/log.o",
+      "srcs/log.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/log.c",
+    "output": "/home/chulee/session_log/objs/log.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
       "-I./includes",
       "-c",
       "-o",
@@ -16,9 +103,62 @@
   },
   {
     "arguments": [
-      "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/make_filename.o",
+      "srcs/make_filename.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/make_filename.c",
+    "output": "/home/chulee/session_log/objs/make_filename.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/read_thread.o",
+      "srcs/read_thread.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/read_thread.c",
+    "output": "/home/chulee/session_log/objs/read_thread.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/string_split.o",
+      "srcs/string_split.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/string_split.c",
+    "output": "/home/chulee/session_log/objs/string_split.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
       "-I./includes",
       "-c",
       "-o",
@@ -31,9 +171,11 @@
   },
   {
     "arguments": [
-      "/usr/bin/gcc",
-      "-fsanitize=address",
-      "-g",
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
       "-I./includes",
       "-c",
       "-o",
@@ -43,5 +185,39 @@
     "directory": "/home/chulee/session_log",
     "file": "/home/chulee/session_log/srcs/string_utils_itoa.c",
     "output": "/home/chulee/session_log/objs/string_utils_itoa.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/utils.o",
+      "srcs/utils.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/utils.c",
+    "output": "/home/chulee/session_log/objs/utils.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-c",
+      "-o",
+      "objs/write_thread.o",
+      "srcs/write_thread.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/srcs/write_thread.c",
+    "output": "/home/chulee/session_log/objs/write_thread.o"
   }
 ]

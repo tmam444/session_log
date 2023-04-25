@@ -6,13 +6,13 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:32:37 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 11:50:22 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 16:52:28 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 
-static char*	command_file_read(char *file_path)
+char*	command_file_read(char *file_path)
 {
 	char		*file_rename_path = ntk_strjoin(file_path, "_tmp");
 	char		*file_data;
@@ -35,7 +35,7 @@ static char*	command_file_read(char *file_path)
 	return (file_data);
 }
 
-static struct command*	command_parsing(char *file_data, error_code *err_code)
+struct command*	command_parsing(char *file_data, error_code *err_code)
 {
 	int				i, token_size = 0;
 	int				*value;
@@ -65,6 +65,16 @@ static struct command*	command_parsing(char *file_data, error_code *err_code)
 			assert(value != NULL);
 			*value = atoi(tokens[i]);
 			ret->cid_list = list_push_back(ret->cid_list, value);
+			if (*value >= MAX_CID_SIZE)
+			{
+				log_message(LOG_WARNING, "cmd file CID data error, cid : %d", *value);
+				*err_code = ERROR_CMD_DATA;
+			}
+		}
+		if (ret->time == 0)
+		{
+			log_message(LOG_WARNING, "cmd file time data error, time : %d", ret->time);
+			*err_code = ERROR_CMD_DATA;
 		}
 	}
 	ntk_strsplit_free(tokens);

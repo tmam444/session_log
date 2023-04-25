@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 11:51:42 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 15:41:41 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,6 +127,8 @@ static void	update_time_and_find_session_files(struct session_simulator *s_simul
 	}
 	else
 	{
+		memset(&s_simulator->m_data[CUR], 0, sizeof(struct minute_data));
+		memset(&s_simulator->m_data[NEXT], 0, sizeof(struct minute_data));
 		find_session_files(s_simulator, command->time + 60, err_code);
 		if (*err_code == NONE)
 			find_session_files(s_simulator, command->time + 120, err_code);

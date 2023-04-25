@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 14:38:34 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 15:49:44 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,10 +18,11 @@ static void	command_start(const char *cmd_directory_path, char *filename)
 {
 	pthread_t		cmd_tid;
 	char			*file_path;
+	const int		str_len = PATH_MAX + NAME_MAX + 1;
 	
-	file_path = malloc(PATH_MAX + 1);
+	file_path = malloc(str_len);
 	assert(file_path != NULL);
-    snprintf(file_path, PATH_MAX + 1, "%s/%s", cmd_directory_path, filename);
+    snprintf(file_path, str_len, "%s/%s", cmd_directory_path, filename);
 	pthread_create(&cmd_tid, NULL, command_thread, file_path);
 	pthread_detach(cmd_tid);
 }

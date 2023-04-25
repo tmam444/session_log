@@ -1,0 +1,21 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/cc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-O3",
+      "-I./includes",
+      "-fsanitize=address",
+      "-g",
+      "-o",
+      "cunit_test",
+      "test/cunit.c"
+    ],
+    "directory": "/home/chulee/session_log",
+    "file": "/home/chulee/session_log/test/cunit.c",
+    "output": "/home/chulee/session_log/cunit_test"
+  }
+]

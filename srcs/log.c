@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/18 13:43:27 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 11:43:03 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 16:06:03 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 static const char	*LOG_LEVEL_NAMES[] = { "ERROR", "WARNING", "INFO", "DEBUG" };
 
-void log_message(log_level level, const char *format, ...)
+void	log_message(log_level level, const char *format, ...)
 {
 	static pthread_mutex_t	log_mutex = PTHREAD_MUTEX_INITIALIZER;
     time_t					rawtime;

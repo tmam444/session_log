@@ -6,15 +6,15 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 16:43:40 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 15:53:52 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "session_log.h"
 
-void*	read_thread(void *arg)
+void*	read_thread(void *__s_simulator)
 {
-	struct session_simulator	*s_simulator = arg;
+	struct session_simulator	*s_simulator = __s_simulator;
 	int							buffer_id, read_size, file_size;
 	List						*cur;
 	FILE						*fp;

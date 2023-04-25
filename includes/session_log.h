@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 18:50:38 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 16:52:38 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,9 +118,11 @@ struct session_simulator
 struct session_simulator*	get_simulator(void);
 long						get_file_size(FILE *file);
 void						command_do(struct command *command, error_code *err_code);
+char*						command_file_read(char *file_path);
+struct command*				command_parsing(char *file_data, error_code *err_code);
 void*						command_thread(void *file_path);
-void*						read_thread(void *arg);
-void*						write_thread(void *arg);
+void*						read_thread(void *__s_simulator);
+void*						write_thread(void *__s_simulator);
 char*						make_real_filename(int user_id);
 char*						make_temp_filename(int user_id);
 char*						make_error_filename(int user_id);

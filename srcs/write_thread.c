@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 18:43:03 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 18:27:59 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,15 +47,11 @@ static void	read_data(struct buffer *buff, struct minute_data *m_data)
 		end_time = data->end_time < 60 ? data->end_time : 59;
 		int_per_second_byte = data->int_byte.byte;
 		ext_per_second_byte = data->ext_byte.byte;
-		diff_time = end_time - start_time;
-		if (diff_time > 0)
-		{
-			if (int_per_second_byte > 0)
-				int_per_second_byte = int_per_second_byte / diff_time;
-			
-			if (ext_per_second_byte > 0)
-				ext_per_second_byte = ext_per_second_byte / diff_time;
-		}
+		diff_time = end_time - start_time + 1;
+		if (int_per_second_byte > 0)
+			int_per_second_byte /= diff_time;
+		if (ext_per_second_byte > 0)
+			ext_per_second_byte /= diff_time;
 		while (start_time <= end_time)
 		{
 			m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte += int_per_second_byte;
@@ -71,9 +67,9 @@ static void	read_data(struct buffer *buff, struct minute_data *m_data)
 	}
 }
 
-void*	write_thread(void *arg)
+void*	write_thread(void *__s_simulator)
 {
-	struct session_simulator	*s_simulator = arg;
+	struct session_simulator	*s_simulator = __s_simulator;
 	bool						is_end = false;
 	int							buffer_id;
 	enum e_minute_index			m_index;
