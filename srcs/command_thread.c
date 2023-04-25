@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:32:37 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 19:01:49 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 11:50:22 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,6 +89,7 @@ void*	command_thread(void *file_path)
 
 	DEBUG_LOG("command process");
 	cmd_data = command_file_read(file_path);
+	free(file_path);
 	command = command_parsing(cmd_data, &err_code);
 	free(cmd_data);
 	if (err_code != NONE)

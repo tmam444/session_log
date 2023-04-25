@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 18:48:40 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 11:51:42 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,9 +45,6 @@ static void	find_session_files(struct session_simulator *s_simulator, const time
 
 	DEBUG_LOG("search_time = %lld", search_time);
 	localtime_r(&search_time, &search_tm);
-	printf("%04d-%02d-%02d %02d:%02d:%02d\n",
-         search_tm.tm_year + 1900, search_tm.tm_mon + 1, search_tm.tm_mday,
-         search_tm.tm_hour, search_tm.tm_min, search_tm.tm_sec);
 	snprintf(directory_path, sizeof(directory_path), "%s/%04d/%02d/%02d", \
 			path, search_tm.tm_year + 1900, search_tm.tm_mon + 1, search_tm.tm_mday);
 	dir = opendir(directory_path);

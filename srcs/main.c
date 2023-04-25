@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 18:29:43 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 13:12:49 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,11 @@ bool		force_quit;
 static void	command_start(const char *cmd_directory_path, char *filename)
 {
 	pthread_t		cmd_tid;
-	char			file_path[PATH_MAX];
+	char			*file_path;
 	
-    snprintf(file_path, sizeof(file_path), "%s/%s", cmd_directory_path, filename);
+	file_path = malloc(PATH_MAX + 1);
+	assert(file_path != NULL);
+    snprintf(file_path, PATH_MAX + 1, "%s/%s", cmd_directory_path, filename);
 	pthread_create(&cmd_tid, NULL, command_thread, file_path);
 	pthread_detach(cmd_tid);
 }
@@ -85,6 +87,7 @@ int	main(void)
 {
 	signal(SIGINT, program_exit);
 	signal(SIGQUIT, program_exit);
+	get_simulator();
 	command_inotify();
 	clear();
 	return (EXIT_SUCCESS);

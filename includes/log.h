@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/18 13:43:48 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/19 13:28:36 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 12:06:17 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <stdarg.h>
 # include <stdlib.h>
 # include <stdbool.h>
+# include <pthread.h>
 # include <time.h>
 
 // DEBUG 메시지 출력을 활성화하려면 이 줄의 주석을 제거하세요

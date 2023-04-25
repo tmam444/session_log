@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 16:20:29 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/25 10:31:26 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,8 @@ static const char	*error_msg[] = {
 	"File header time is not equals",
 	"Session log file name is wrong",
 	"Unknown Daemon Error, See Daemon Log",
-	"Cmd data is wrong"
+	"Cmd data is wrong",
+	"Command is running.."
 };
 
 void	create_error_file(error_code code, int user_id)
