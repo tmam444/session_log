@@ -6,16 +6,15 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:38:52 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 18:59:21 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 16:42:12 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 char*	make_real_filename(int user_id)
 {
-	// const char	*path = "/usr/lib/qosd/tmp";
-	const char	*path = "/home/chulee/session_log/temp";
+	const char	*path = "/usr/lib/qosd/tmp";
 	const int	cmd_number = 99;
 	const int	filename_len = PATH_MAX;
 	char		*filename;
@@ -29,8 +28,7 @@ char*	make_real_filename(int user_id)
 
 char*	make_temp_filename(int user_id)
 {
-	// const char	*path = "/usr/lib/qosd/tmp";
-	const char	*path = "/home/chulee/session_log/temp";
+	const char	*path = "/usr/lib/qosd/tmp";
 	const int	cmd_number = 99;
 	const int	filename_len = PATH_MAX;
 	char		*filename;

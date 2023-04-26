@@ -6,11 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 10:31:26 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 17:39:28 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 static const char	*error_msg[] = {
 	"Date parsing error",
@@ -20,7 +20,8 @@ static const char	*error_msg[] = {
 	"Session log file name is wrong",
 	"Unknown Daemon Error, See Daemon Log",
 	"Cmd data is wrong",
-	"Command is running.."
+	"Command is running..",
+	"Raw Data is wrong"
 };
 
 void	create_error_file(error_code code, int user_id)

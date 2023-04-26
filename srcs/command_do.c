@@ -6,11 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 15:41:41 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 11:46:32 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 static bool	check_file_name_equals_time(struct tm *search_tm, char *file_name)
 {
@@ -35,8 +35,7 @@ static bool	check_file_name_equals_time(struct tm *search_tm, char *file_name)
 
 static void	find_session_files(struct session_simulator *s_simulator, const time_t search_time, error_code *err_code)
 {
-	// const char		*path = "/var/qosd/log/raw";
-	const char		*path = "/home/chulee/session_log/data";
+	const char		*path = "/var/qosd/log/raw";
 	struct tm		search_tm;
 	char			directory_path[PATH_MAX], file_path[PATH_MAX * 2];
 	DIR				*dir;

@@ -6,11 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:43:23 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 16:44:22 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 11:46:34 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 long	get_file_size(FILE *file)
 {

@@ -6,11 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 15:53:52 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 11:46:33 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 void*	read_thread(void *__s_simulator)
 {

@@ -6,11 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 15:49:44 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 16:59:44 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "session_log.h"
+#include "flow_simulator.h"
 
 bool		force_quit;
 
@@ -29,8 +29,8 @@ static void	command_start(const char *cmd_directory_path, char *filename)
 
 static void	command_inotify(void)
 {
-	// const char				*cmd_directory_path = "/usr/lib/qosd/tmp";
-	const char				*cmd_directory_path = "/home/chulee/session_log/command";
+	const char				*cmd_directory_path = "/usr/lib/qosd/tmp";
+	const char				*cmd_prefix = "real_cmd_99";
     unsigned char			buffer[EVENT_BUFFER_SIZE];
 	int						inotify_fd, wd, i, length;
 	struct inotify_event	*event;
@@ -55,7 +55,7 @@ static void	command_inotify(void)
 		for (i = 0; i < length; i += EVENT_SIZE + event->len)
 		{
 			event = (struct inotify_event *)&buffer[i];
-			if (!ntk_str_ends_with(event->name, "_tmp") && (event->mask & IN_CREATE || event->mask & IN_MOVED_TO))
+			if (!strncmp(event->name, cmd_prefix, strlen(cmd_prefix)) && !ntk_str_ends_with(event->name, "_tmp"))
 				command_start(cmd_directory_path, event->name);
 		}
     }

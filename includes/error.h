@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 11:37:57 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/24 16:20:35 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/26 17:39:08 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ typedef enum e_error {
 	ERROR_DAEMON,
 	ERROR_CMD_DATA,
 	ERROR_CMD_IS_RUNNING,
+	ERROR_RAW_DATA,
 	NONE
 } error_code;
 
