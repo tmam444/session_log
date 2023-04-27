@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 17:08:50 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 19:03:52 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,10 +175,6 @@ static void	make_result_file(struct session_simulator *s_simulator)
 	free(real_filename);
 	free(temp_filename);
 }
-/*
- * 0:EXT_TOTAL:0:0: 0:INT_TOTAL:0:0
- * [ LINE 1 EXT RX BYTE ]:[ TX BYTE ]:[ RX PACEKT ]:[ TX PACKET ]:[ LINE 1 INT RX BYTE ]:[ TX BYTE ]:[ RX PACEKT ]:[ TX PACKET ]: ... [ LINE X EXT RX BYTE ]
- */
 
 static bool	command_check_is_running_and_set(struct session_simulator *s_simulator, const bool set_value)
 {

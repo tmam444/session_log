@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 17:38:42 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 19:02:16 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ void*	read_thread(void *__s_simulator)
 		fp = fopen(cur->value, "r");
 		if (fp == NULL)
 		{
-			log_message(LOG_ERROR, "File Open : %s\n", (char *)cur->value);
+			log_message(LOG_WARNING, "File Open : %s\n", (char *)cur->value);
 			*err_code = ERROR_FILE_NOT_FOUND;
 			break;
 		}
