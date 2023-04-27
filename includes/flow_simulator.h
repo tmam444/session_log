@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 17:57:37 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 11:06:07 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@
 # define EVENT_SIZE				(sizeof(struct inotify_event))
 # define EVENT_BUFFER_SIZE		(1024 * (EVENT_SIZE + NAME_MAX + 1))
 # define FILE_READ_BUFFER_SIZE	1024
-# define HEADER_SIZE			sizeof(struct RawFileHeader3_t)
-# define DATA_SIZE				sizeof(struct RawDataVer3_t)
+# define HEADER_SIZE			sizeof(struct RawFileHeader2_t)
+# define DATA_SIZE				sizeof(struct RawDataVer2_t)
 # define MAX_SEG_SIZE			8
 # define MAX_CID_SIZE			5000
 # define SECOND					60
