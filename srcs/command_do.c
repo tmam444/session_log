@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 14:42:22 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 17:08:50 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,6 +168,7 @@ static void	make_result_file(struct session_simulator *s_simulator)
 			fprintf(fp, ":%d:%llu:%d:%llu:%d:%d", 0, m_data->s_data[i][second].internal[*cid].total_byte, \
 													0, m_data->s_data[i][second].external[*cid].total_byte, 0, 0);
 	}
+	fprintf(fp, "\n");
 	fclose(fp);
 	real_filename = make_real_filename(s_simulator->cmd->user_id);
 	rename(temp_filename, real_filename);

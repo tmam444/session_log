@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 14:52:51 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 17:38:52 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ static void	read_header(unsigned char *buff, struct session_simulator *s_simulat
 	{
 		log_message(LOG_WARNING, "header time is not equals, s_time = %lld, header_time = %lld", s_time_minus_sec, header_time);
 		*err_code = ERROR_FILE_HEADER;
-	
 		return ;
 	}
 }
@@ -117,10 +116,10 @@ void*	write_thread(void *__s_simulator)
 			if (*err_code == NONE)
 				read_data(&s_simulator->buffers[buffer_id], &s_simulator->m_data[m_index], err_code);
 			free(s_simulator->buffers[buffer_id].b_data);
-			s_simulator->buffers[buffer_id].status = EMPTY;
 		}
 		else if (s_simulator->buffers[buffer_id].status == END)
 			is_end = true;
+		s_simulator->buffers[buffer_id].status = EMPTY;
 		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 		buffer_id = (buffer_id + 1) % BUFF_LENGTH;
 	}

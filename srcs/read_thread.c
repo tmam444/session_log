@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 11:46:33 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 17:38:42 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,8 @@ void*	read_thread(void *__s_simulator)
 	assert(err_code != NULL);
 	*err_code = NONE;
 	buffer_id = 0;
-	for (cur = s_simulator->log_files; cur != NULL; cur = cur->next)
+	cur = s_simulator->log_files;
+	while (cur != NULL)
 	{
 		fp = fopen(cur->value, "r");
 		if (fp == NULL)
@@ -46,6 +47,7 @@ void*	read_thread(void *__s_simulator)
 			else
 				s_simulator->buffers[buffer_id].read_size = read_size;
 			s_simulator->buffers[buffer_id].status = NEW;
+			cur = cur->next;
 		}
 		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 		fclose(fp);
