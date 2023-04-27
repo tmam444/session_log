@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 11:46:32 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 14:42:22 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,15 +158,15 @@ static void	make_result_file(struct session_simulator *s_simulator)
 	//print Total, CID 0
 	fprintf(fp, ",0");
 	for (i = 0; i < MAX_SEG_SIZE; i++)
-		fprintf(fp, ":%llu:%llu:%d:%d", m_data->t_data[i][second].internal.total_byte, \
-										m_data->t_data[i][second].external.total_byte, 0, 0);
+		fprintf(fp, ":%d:%llu:%d:%llu:%d:%d", 0, m_data->t_data[i][second].internal.total_byte, \
+												0, m_data->t_data[i][second].external.total_byte, 0, 0);
 	for (cur = s_simulator->cmd->cid_list; cur != NULL; cur = cur->next)
 	{
 		cid = cur->value;
 		fprintf(fp, ",%d", *cid);
 		for (i = 0; i < MAX_SEG_SIZE; i++)
-			fprintf(fp, ":%llu:%llu:%d:%d", m_data->s_data[i][second].internal[*cid].total_byte, \
-											m_data->s_data[i][second].external[*cid].total_byte, 0, 0);
+			fprintf(fp, ":%d:%llu:%d:%llu:%d:%d", 0, m_data->s_data[i][second].internal[*cid].total_byte, \
+													0, m_data->s_data[i][second].external[*cid].total_byte, 0, 0);
 	}
 	fclose(fp);
 	real_filename = make_real_filename(s_simulator->cmd->user_id);
@@ -174,6 +174,10 @@ static void	make_result_file(struct session_simulator *s_simulator)
 	free(real_filename);
 	free(temp_filename);
 }
+/*
+ * 0:EXT_TOTAL:0:0: 0:INT_TOTAL:0:0
+ * [ LINE 1 EXT RX BYTE ]:[ TX BYTE ]:[ RX PACEKT ]:[ TX PACKET ]:[ LINE 1 INT RX BYTE ]:[ TX BYTE ]:[ RX PACEKT ]:[ TX PACKET ]: ... [ LINE X EXT RX BYTE ]
+ */
 
 static bool	command_check_is_running_and_set(struct session_simulator *s_simulator, const bool set_value)
 {

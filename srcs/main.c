@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 16:59:44 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 14:43:56 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,17 +14,78 @@
 
 bool		force_quit;
 
-static void	command_start(const char *cmd_directory_path, char *filename)
+static char*	make_file_path(const char *cmd_directory_path, const char *filename)
 {
-	pthread_t		cmd_tid;
 	char			*file_path;
 	const int		str_len = PATH_MAX + NAME_MAX + 1;
-	
+
 	file_path = malloc(str_len);
 	assert(file_path != NULL);
     snprintf(file_path, str_len, "%s/%s", cmd_directory_path, filename);
-	pthread_create(&cmd_tid, NULL, command_thread, file_path);
-	pthread_detach(cmd_tid);
+	return (file_path);
+}
+
+char*	command_file_read(char *file_path, error_code *err_code)
+{
+	char		*file_rename_path = ntk_strjoin(file_path, "_tmp");
+	char		*file_data;
+	ssize_t		read_size, file_size;
+	FILE		*fp;
+
+	if (rename(file_path, file_rename_path) != EXIT_SUCCESS)
+	{
+		log_message(LOG_WARNING, "rename Failed, filename : %s", file_path);
+		*err_code = ERROR_DAEMON;
+		free(file_rename_path);
+		return (NULL);
+	}
+	fp = fopen(file_rename_path, "r");
+	if (fp == NULL)
+	{
+		log_message(LOG_WARNING, "cmd file open error, path : %s", file_rename_path);
+		*err_code = ERROR_FILE_NOT_FOUND;
+		free(file_rename_path);
+		return (NULL);
+	}
+	file_size = get_file_size(fp);
+	file_data = malloc(file_size + 1);
+	assert(file_data != NULL);
+	read_size = fread(file_data, file_size, 1, fp);
+	if (read_size == 1)
+		file_data[file_size] = '\0';
+	else
+		file_data[read_size] = '\0';
+    fclose(fp);
+	free(file_rename_path);
+	DEBUG_LOG("command read complete");
+	return (file_data);
+}
+
+static void	command_start(const char *cmd_directory_path, const char *filename)
+{
+	pthread_t		cmd_tid;
+	error_code		err_code = NONE;
+	char			*cmd_data;
+	char			*file_path;
+	char			**cmds;
+	int				i;
+	
+	file_path = make_file_path(cmd_directory_path, filename);
+	cmd_data = command_file_read(file_path, &err_code);
+	free(file_path);
+	if (err_code == NONE)
+	{
+		cmds = ntk_strsplit(cmd_data, '\n');
+		free(cmd_data);
+		i = 0;
+		while (cmds[i] != NULL)
+		{
+			pthread_create(&cmd_tid, NULL, command_thread, ntk_strdup(cmds[i]));
+			pthread_detach(cmd_tid);
+			i++;
+		}
+		ntk_strsplit_free(cmds);
+	}
 }
 
 static void	command_inotify(void)

@@ -6,45 +6,11 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:32:37 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 16:43:46 by chulee           ###   ########.fr       */
+/*   Updated: 2023/04/27 14:43:49 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "flow_simulator.h"
-
-char*	command_file_read(char *file_path, error_code *err_code)
-{
-	char		*file_rename_path = ntk_strjoin(file_path, "_tmp");
-	char		*file_data;
-	ssize_t		read_size, file_size;
-	FILE		*fp;
-
-	if (rename(file_path, file_rename_path) != EXIT_SUCCESS)
-	{
-		log_message(LOG_WARNING, "rename Failed, filename : %s", file_path);
-		*err_code = ERROR_DAEMON;
-		return (NULL);
-	}	
-	fp = fopen(file_rename_path, "r");
-	if (fp == NULL)
-	{
-		log_message(LOG_WARNING, "cmd file open error, path : %s", file_rename_path);
-		*err_code = ERROR_FILE_NOT_FOUND;
-		return (NULL);
-	}
-	file_size = get_file_size(fp);
-	file_data = malloc(file_size + 1);
-	assert(file_data != NULL);
-	read_size = fread(file_data, file_size, 1, fp);
-	if (read_size == 1)
-		file_data[file_size] = '\0';
-	else
-		file_data[read_size] = '\0';
-    fclose(fp);
-	free(file_rename_path);
-	DEBUG_LOG("command read complete");
-	return (file_data);
-}
 
 struct command*	command_parsing(char *file_data, error_code *err_code)
 {
@@ -102,17 +68,12 @@ static void	command_free(struct command *command)
 	}
 }
 
-void*	command_thread(void *file_path)
+void*	command_thread(void *cmd_data)
 {
-	char			*cmd_data;
 	struct command	*command;
 	error_code		err_code = NONE;
 
 	DEBUG_LOG("command process");
-	cmd_data = command_file_read(file_path, &err_code);
-	free(file_path);
-	if (err_code != NONE)
-		pthread_exit(NULL);
 	command = command_parsing(cmd_data, &err_code);
 	free(cmd_data);
 	if (err_code != NONE)
