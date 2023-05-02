@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 14:43:56 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 11:14:34 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,10 +130,34 @@ static void	program_exit(int signum)
 	force_quit = true;
 }
 
+static void	log_file_setting(void)
+{
+	static char*	log_file_path = "/var/log/flow_simulator.log";
+	int				log_fd = open(log_file_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    int				stdout_fd = dup(fileno(stdout));
+
+    if (log_fd < 0)
+	{
+		perror("Error opening logfile");
+		exit(EXIT_FAILURE);
+    }
+    if (stdout_fd < 0)
+	{
+		perror("Error duplicating stdout");
+		exit(EXIT_FAILURE);
+    }
+    if (dup2(log_fd, fileno(stdout)) < 0)
+	{
+		perror("Error redirecting stdout to logfile");
+		exit(EXIT_FAILURE);
+    }
+}
+
 int	main(void)
 {
 	signal(SIGINT, program_exit);
 	signal(SIGQUIT, program_exit);
+	log_file_setting();
 	get_simulator();
 	command_inotify();
 	return (EXIT_SUCCESS);

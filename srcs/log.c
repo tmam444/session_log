@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/18 13:43:27 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/25 16:06:03 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 10:55:54 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,4 +36,5 @@ void	log_message(log_level level, const char *format, ...)
 	pthread_mutex_unlock(&log_mutex);
 	if (level == LOG_ERROR)
 		exit(EXIT_FAILURE);
+	fflush(stdout);
 }
