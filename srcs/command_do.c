@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 19:03:52 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 14:02:31 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,6 @@ static enum e_time	update_time(struct session_simulator *s_simulator, struct com
 	time_t		s_time_minus_sec;
 
 	s_time_minus_sec = s_simulator->stime - (s_simulator->stime % 60);
-	s_simulator->stime = command->time;
 	if (s_time_minus_sec - 60 <= command->time && command->time < s_time_minus_sec)
 	{
 		ret = PREV_TIME;
@@ -102,6 +101,7 @@ static enum e_time	update_time(struct session_simulator *s_simulator, struct com
 		s_simulator->is_cached = false;
 		DEBUG_LOG("GET NEW MINUTE TIME FILE");
 	}
+	s_simulator->stime = command->time;
 	return (ret);
 }
 
@@ -176,7 +176,7 @@ static void	make_result_file(struct session_simulator *s_simulator)
 	free(temp_filename);
 }
 
-static bool	command_check_is_running_and_set(struct session_simulator *s_simulator, const bool set_value)
+static bool	command_is_running_check_and_set(struct session_simulator *s_simulator, const bool set_value)
 {
 	bool	prev_value;
 
@@ -211,7 +211,7 @@ void	command_do(struct command *command, error_code *err_code)
 	error_code					*read_retval = NULL, *write_retval = NULL;
 
 	s_simulator = get_simulator();
-	if (command_check_is_running_and_set(s_simulator, true))
+	if (command_is_running_check_and_set(s_simulator, true))
 	{
 		*err_code = ERROR_CMD_IS_RUNNING;
 		return ;
@@ -239,5 +239,5 @@ void	command_do(struct command *command, error_code *err_code)
 	}
 	list_free(s_simulator->log_files);
 	s_simulator->log_files = NULL;
-	command_check_is_running_and_set(s_simulator, false);
+	command_is_running_check_and_set(s_simulator, false);
 }

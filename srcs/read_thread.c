@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:05 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 19:02:16 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 14:21:35 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ void*	read_thread(void *__s_simulator)
 {
 	struct session_simulator	*s_simulator = __s_simulator;
 	int							buffer_id, read_size, file_size;
-	List						*cur;
+	List						*cur_log_file;
 	FILE						*fp;
 	error_code					*err_code;
 
@@ -24,13 +24,13 @@ void*	read_thread(void *__s_simulator)
 	assert(err_code != NULL);
 	*err_code = NONE;
 	buffer_id = 0;
-	cur = s_simulator->log_files;
-	while (cur != NULL)
+	cur_log_file = s_simulator->log_files;
+	while (cur_log_file != NULL)
 	{
-		fp = fopen(cur->value, "r");
+		fp = fopen(cur_log_file->value, "r");
 		if (fp == NULL)
 		{
-			log_message(LOG_WARNING, "File Open : %s\n", (char *)cur->value);
+			log_message(LOG_WARNING, "File Open : %s\n", (char *)cur_log_file->value);
 			*err_code = ERROR_FILE_NOT_FOUND;
 			break;
 		}
@@ -41,13 +41,13 @@ void*	read_thread(void *__s_simulator)
 			s_simulator->buffers[buffer_id].b_data = malloc(file_size);
 			assert(s_simulator->buffers[buffer_id].b_data != NULL);
 			read_size = fread(s_simulator->buffers[buffer_id].b_data, file_size, 1, fp);
-			DEBUG_LOG("Read File - %s, Size - %d, Full Read - %s", (char *)cur->value, file_size, read_size == 1 ? "true" : "false");
+			DEBUG_LOG("Read File - %s, Size - %d, Full Read - %s", (char *)cur_log_file->value, file_size, read_size == 1 ? "true" : "false");
 			if (read_size == 1)
 				s_simulator->buffers[buffer_id].read_size = file_size;
 			else
 				s_simulator->buffers[buffer_id].read_size = read_size;
 			s_simulator->buffers[buffer_id].status = NEW;
-			cur = cur->next;
+			cur_log_file = cur_log_file->next;
 		}
 		pthread_mutex_unlock(&s_simulator->buffers[buffer_id].lock);
 		fclose(fp);

@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 11:06:07 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 14:19:06 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,11 +115,10 @@ struct session_simulator
 	struct command		*cmd;
 };
 
+void						program_setup(void);
 struct session_simulator*	get_simulator(void);
 long						get_file_size(FILE *file);
 void						command_do(struct command *command, error_code *err_code);
-char*						command_file_read(char *file_path, error_code *err_code);
-struct command*				command_parsing(char *file_data, error_code *err_code);
 void*						command_thread(void *file_path);
 void*						read_thread(void *__s_simulator);
 void*						write_thread(void *__s_simulator);

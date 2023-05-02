@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:32:37 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 14:43:49 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/02 13:45:47 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,14 +27,14 @@ struct command*	command_parsing(char *file_data, error_code *err_code)
 	while (tokens[token_size] != NULL)
 		token_size++;
 	DEBUG_LOG("token size = %d", token_size);
-	if (token_size < 3 || tokens[2][0] == '\0' || tokens[2][0] == '\n')
+	if (token_size < 3 || *(tokens[2]) == '\0' || *(tokens[2]) == '\n')
 	{
 		log_message(LOG_WARNING, "cmd file data error, data : %s", file_data);
 		*err_code = ERROR_CMD_DATA;
 	}
 	else
 	{
-		ret->user_id = atoi(tokens[0] + 1); //remove #, #10 -> 10
+		ret->user_id = atoi(tokens[0] + 1); //remove #, atoi("#10") -> atoi("10")
 		ret->time = atoi(tokens[1]);
 		for (i = 2; tokens[i] != NULL; i++)
 		{
