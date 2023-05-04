@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/05/02 14:18:16 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/02 14:18:45 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 13:51:33 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,16 +22,10 @@ static void	log_file_setting(void)
 {
 	static const char*	log_file_path = "/var/log/flow_simulator.log";
 	int					log_fd = open(log_file_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-    int					stdout_fd = dup(fileno(stdout));
 
     if (log_fd < 0)
 	{
 		perror("Error opening logfile");
-		exit(EXIT_FAILURE);
-    }
-    if (stdout_fd < 0)
-	{
-		perror("Error duplicating stdout");
 		exit(EXIT_FAILURE);
     }
     if (dup2(log_fd, fileno(stdout)) < 0)

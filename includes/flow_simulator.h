@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/02 14:19:06 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 14:01:49 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 # define SECOND					60
 # define BUFF_LENGTH			2
 # define BUFF_MINUTE			2
-# define ERROR_FILE_NUMBER		999
 # include "raw_file_type.h"
 # include "list.h"
 # include "string_utils.h"

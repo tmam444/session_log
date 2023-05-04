@@ -6,18 +6,16 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 17:39:28 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/03 15:18:31 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "flow_simulator.h"
 
 static const char	*error_msg[] = {
-	"Date parsing error",
 	"Session directory not found",
 	"Session log file not found",
 	"File header time is not equals",
-	"Session log file name is wrong",
 	"Unknown Daemon Error, See Daemon Log",
 	"Cmd data is wrong",
 	"Command is running..",
