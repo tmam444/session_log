@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/04 14:01:49 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 17:43:21 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,12 @@ enum	e_time
 	ANOTHER_TIME
 };
 
+enum	e_direction { 
+	INTERNAL = 'I',
+	EXTERNAL = 'E',
+	BIDRECTION = 'B'
+};
+
 struct second_data_byte
 {
 	unsigned long long	total_byte;
@@ -102,11 +108,25 @@ struct command
 	List	*cid_list;
 };
 
+struct cid_map_data
+{
+	enum e_direction	direction;
+	int					parent_cid;
+	bool				is_leaf;
+};
+
+struct cid_map
+{
+	int						qid;
+	struct cid_map_data		list[MAX_CID_SIZE];
+};
+
 struct session_simulator
 {
 	pthread_mutex_t		lock;
 	List				*log_files;
 	time_t				stime;
+	struct cid_map		cid_map;
 	struct minute_data	m_data[BUFF_MINUTE];
 	struct buffer		buffers[BUFF_LENGTH];
 	bool				is_cached;

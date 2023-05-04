@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/27 18:21:43 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 18:38:02 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,11 +56,11 @@ static bool	check_validate_data(struct RawDataVer2_t *data, error_code *err_code
 	return (true);
 }
 
-static void	read_data(struct buffer *buff, struct minute_data *m_data, error_code *err_code)
+static void	read_data(struct buffer *buff, struct minute_data *m_data, struct cid_map *cid_map, error_code *err_code)
 {
 	struct RawDataVer2_t	*data;
 	unsigned long long		start_time, end_time, int_per_second_byte, ext_per_second_byte, diff_time;
-	int						i;
+	int						i, j;
 
 	for (i = HEADER_SIZE; i < buff->read_size; i += DATA_SIZE)
 	{
@@ -81,14 +81,18 @@ static void	read_data(struct buffer *buff, struct minute_data *m_data, error_cod
 		}
 		while (start_time <= end_time)
 		{
+			for (j = data->int_cid; j != cid_map->list[j].parent_cid; j = cid_map->list[j].parent_cid)
+				m_data->s_data[data->seg_num][start_time].internal[cid_map->list[j].parent_cid].total_byte += int_per_second_byte;
+			for (j = data->ext_cid; j != cid_map->list[j].parent_cid; j = cid_map->list[j].parent_cid)
+				m_data->s_data[data->seg_num][start_time].external[cid_map->list[j].parent_cid].total_byte += ext_per_second_byte;
 			m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte += int_per_second_byte;
-			assert(m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte >= int_per_second_byte);
 			m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte += ext_per_second_byte;
-			assert(m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte >= ext_per_second_byte);
 			m_data->t_data[data->seg_num][start_time].internal.total_byte += int_per_second_byte;
-			assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
 			m_data->t_data[data->seg_num][start_time].external.total_byte += ext_per_second_byte;
+			assert(m_data->s_data[data->seg_num][start_time].internal[data->int_cid].total_byte >= int_per_second_byte);
+			assert(m_data->s_data[data->seg_num][start_time].external[data->ext_cid].total_byte >= ext_per_second_byte);
 			assert(m_data->t_data[data->seg_num][start_time].internal.total_byte >= int_per_second_byte);
+			assert(m_data->t_data[data->seg_num][start_time].external.total_byte >= ext_per_second_byte);
 			start_time++;
 		}
 	}
@@ -114,7 +118,7 @@ void*	write_thread(void *__s_simulator)
 			DEBUG_LOG("write_thread new file!");
 			read_header(s_simulator->buffers[buffer_id].b_data, s_simulator, &m_index, err_code);
 			if (*err_code == NONE)
-				read_data(&s_simulator->buffers[buffer_id], &s_simulator->m_data[m_index], err_code);
+				read_data(&s_simulator->buffers[buffer_id], &s_simulator->m_data[m_index], &s_simulator->cid_map, err_code);
 			free(s_simulator->buffers[buffer_id].b_data);
 		}
 		else if (s_simulator->buffers[buffer_id].status == END)

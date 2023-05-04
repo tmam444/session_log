@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 13:17:28 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/03 15:18:31 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 17:11:05 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,9 @@ static const char	*error_msg[] = {
 	"Unknown Daemon Error, See Daemon Log",
 	"Cmd data is wrong",
 	"Command is running..",
-	"Raw Data is wrong"
+	"Raw Data is wrong",
+	"script run failed",
+	"script result file open error"
 };
 
 void	create_error_file(error_code code, int user_id)

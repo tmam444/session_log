@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:56:45 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/02 14:18:35 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 18:45:58 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,12 +108,6 @@ static void	command_inotify(void)
     while (!force_quit)
 	{
 		length = read(inotify_fd, buffer, EVENT_BUFFER_SIZE);
-		if (length < 0)
-		{
-			if (!force_quit)
-				log_message(LOG_WARNING, "Failed inotify_fd read");
-			break ;
-		}
 		for (i = 0; i < length; i += EVENT_SIZE + event->len)
 		{
 			event = (struct inotify_event *)&buffer[i];

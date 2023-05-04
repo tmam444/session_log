@@ -16,7 +16,7 @@ $filename = "timestamp_nqueue.info";
 
 $nqueue_result = "[SERVICE_MODULE RCAL]\n";
 
-if ($argc == 3) {
+if ($argc == 2) {
 
 			//$hh = date('H') . "00" ;
 			$hh = date('H', $argv[1]) . "" . date('i', $argv[1]) ;
@@ -245,7 +245,7 @@ $f_open = fopen("$filepath/$filename","w");
 fwrite($f_open,$nqueue_result);
 fclose($f_open);
 
-exec("cat $filepath/$filename > /proc/service/setting");
+//exec("cat $filepath/$filename > /proc/service/setting");
 //echo $result_cmd;
 // 입력파일 읽고 쓰기.
 ?>

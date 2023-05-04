@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/02 17:26:53 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 18:46:54 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,10 +136,64 @@ static void	update_time_and_find_session_files(struct session_simulator *s_simul
 		s_simulator->stime = 0;
 }
 
+static void	read_cid_info(struct session_simulator *s_simulator, error_code *err_code)
+{
+	const char	*result_file = "/usr/lib/qosd/tmp/timestamp_nqueue.info";
+	const char	*qid_prefix = "qid=", *nqueue_prefix = "nqueue=";
+	FILE		*fp;
+	char		buff[FILE_READ_BUFFER_SIZE];
+	char		**tokens;
+	int			cid;
+
+	fp = fopen(result_file, "r");
+	if (!fp)
+	{
+		*err_code = ERROR_SCRIPT_RESULT_FILE_OPEN_FAILED;
+		log_message(LOG_WARNING, "get timestamp_nqueue script failed");
+		return;
+	}
+	while (fgets(buff, sizeof(buff), fp))
+	{
+		if (strncmp(buff, qid_prefix, strlen(qid_prefix)) == 0)
+			s_simulator->cid_map.qid = atoi(buff + strlen(qid_prefix));
+		else if (strncmp(buff, nqueue_prefix, strlen(nqueue_prefix)) == 0)
+		{
+			tokens = ntk_strsplit(buff + strlen(nqueue_prefix), ',');
+			cid = atoi(tokens[1]);
+			s_simulator->cid_map.list[cid].direction = *tokens[0];
+			s_simulator->cid_map.list[cid].parent_cid = atoi(tokens[2]);
+			s_simulator->cid_map.list[cid].is_leaf = atoi(tokens[3]);
+			ntk_strsplit_free(tokens);
+		}
+	}
+}
+
+static void	make_cid_map(struct session_simulator *s_simulator, error_code *err_code)
+{
+	const char	*php_path = "/usr/lib/apm/php/bin/php";
+	const char	*script_path = "/usr/lib/qosd/bin/timestamp_nqueue.sh";
+	char		*run_script_cmd;
+	int			cmd_ret;
+
+	run_script_cmd = malloc(PATH_MAX);
+	sprintf(run_script_cmd, "%s %s %ld", php_path, script_path, s_simulator->stime);
+	cmd_ret = system(run_script_cmd);
+	free(run_script_cmd);
+	if (cmd_ret)
+	{
+		*err_code = ERROR_SCRIPT_RUN_FAILED;
+		log_message(LOG_WARNING, "get timestamp_nqueue script failed");
+		return;
+	}
+	read_cid_info(s_simulator, err_code);
+}
+
 static void setup(struct session_simulator *s_simulator, struct command *command, error_code *err_code)
 {
 	s_simulator->cmd = command;
 	update_time_and_find_session_files(s_simulator, command, err_code);
+	if (*err_code == NONE)
+		make_cid_map(s_simulator, err_code);
 }
 
 static void	make_result_file(struct session_simulator *s_simulator)

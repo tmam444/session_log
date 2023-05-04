@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/19 11:37:57 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/03 15:18:39 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/04 17:11:12 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ typedef enum e_error {
 	ERROR_CMD_DATA,
 	ERROR_CMD_IS_RUNNING,
 	ERROR_RAW_DATA,
+	ERROR_SCRIPT_RUN_FAILED,
+	ERROR_SCRIPT_RESULT_FILE_OPEN_FAILED,
 	NONE
 } error_code;
 
