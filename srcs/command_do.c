@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/08 13:30:24 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/08 15:16:48 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,8 +220,8 @@ static void	make_result_file(struct session_simulator *s_simulator)
 		cid = cur->value;
 		fprintf(fp, ",%d", *cid);
 		for (i = 0; i < MAX_SEG_SIZE; i++)
-			fprintf(fp, ":%d:%llu:%d:%d:%d:%llu:%d:%d", 0, m_data->s_data[i][second].internal[*cid].total_byte, 0, 0, \
-														0, m_data->s_data[i][second].external[*cid].total_byte, 0, 0);
+			fprintf(fp, ":%d:%llu:%d:%d:%d:%llu:%d:%d", 0, m_data->s_data[i][second].external[*cid].total_byte, 0, 0, \
+														0, m_data->s_data[i][second].internal[*cid].total_byte, 0, 0);
 	}
 	fprintf(fp, "\n");
 	fclose(fp);
