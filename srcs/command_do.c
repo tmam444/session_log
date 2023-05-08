@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/08 15:16:48 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/08 16:28:12 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,7 +193,7 @@ static void setup(struct session_simulator *s_simulator, struct command *command
 {
 	s_simulator->cmd = command;
 	update_time_and_find_session_files(s_simulator, command, err_code);
-	if (*err_code == NONE)
+	if (*err_code == NONE && !s_simulator->is_cached)
 		make_cid_map(s_simulator, err_code);
 }
 
