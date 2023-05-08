@@ -3,16 +3,15 @@
 <?php
 $cmd = "/usr/lib/qosd/www/html";
 //**************** DB 연결 - 접근권한 체크 ***************//
-require_once "config.php" ;
-require_once "function_qos.php";
-require_once 'deprecated.php';
+require_once "$cmd/include/config.php";
+require_once "$cmd/function_qos.php";
 
 $dbconn = mysql_connect($user['mysql_host'], $user['mysql_user'], $user['mysql_pass']);
 $status = mysql_select_db($user['mysql_db_taskqos'], $dbconn);
 //**************** DB 연결 - 접근권한 체크 ***************//
 
-$filepath = "/usr/lib/qosd/tmp";
-$filename = "timestamp_nqueue.info";
+$save_filepath = "/usr/lib/qosd/tmp";
+$save_filename = "timestamp_nqueue.info";
 
 $nqueue_result = "[SERVICE_MODULE RCAL]\n";
 
@@ -214,7 +213,7 @@ if ($argc == 2) {
 					$sql = "select cid, rate, ceil, leaf, hid_cid, cname, is_view, prio from tblClass_ext where hid_qid = $now_select_qname_id order by hid_cid asc, cid asc";
 					$result = mysql_query($sql,$dbconn);
 
-					while ( $row = mysql_fetch_row($result)) {
+					while ( $row = mysql_fetch_row($result) ) {
 					   //$rate_rate = $row[1] / $tot_rate * 100 ;  
 					   //$ceil_rate = $row[2] / $tot_rate * 100 ;  
 					   $rate_rate = $row[1] ;  
@@ -241,7 +240,7 @@ if ($argc == 2) {
 	$nqueue_result .= "Usage $argv[0] [start_time] [save filename]";
 }
 
-$f_open = fopen("$filepath/$filename","w");
+$f_open = fopen("$save_filepath/$save_filename","w");
 fwrite($f_open,$nqueue_result);
 fclose($f_open);
 

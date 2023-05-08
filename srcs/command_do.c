@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/04 18:46:54 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/08 13:30:24 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,7 @@ static void	read_cid_info(struct session_simulator *s_simulator, error_code *err
 			ntk_strsplit_free(tokens);
 		}
 	}
+    fclose(fp);
 }
 
 static void	make_cid_map(struct session_simulator *s_simulator, error_code *err_code)

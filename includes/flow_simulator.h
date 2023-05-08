@@ -6,13 +6,14 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/04 17:43:21 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/08 13:28:49 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef SESSION_LOG_H
 # define SESSION_LOG_H
 # define _XOPEN_SOURCE
+# define _DEFAULT_SOURCE
 # define EVENT_SIZE				(sizeof(struct inotify_event))
 # define EVENT_BUFFER_SIZE		(1024 * (EVENT_SIZE + NAME_MAX + 1))
 # define FILE_READ_BUFFER_SIZE	1024
