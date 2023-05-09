@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 17:35:26 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/08 16:28:12 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/09 10:58:20 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,7 +143,7 @@ static void	read_cid_info(struct session_simulator *s_simulator, error_code *err
 	FILE		*fp;
 	char		buff[FILE_READ_BUFFER_SIZE];
 	char		**tokens;
-	int			cid;
+	int			cid, qid;
 
 	fp = fopen(result_file, "r");
 	if (!fp)
@@ -155,7 +155,12 @@ static void	read_cid_info(struct session_simulator *s_simulator, error_code *err
 	while (fgets(buff, sizeof(buff), fp))
 	{
 		if (strncmp(buff, qid_prefix, strlen(qid_prefix)) == 0)
-			s_simulator->cid_map.qid = atoi(buff + strlen(qid_prefix));
+		{
+			qid = atoi(buff + strlen(qid_prefix));
+			if (qid == s_simulator->cid_map.qid)
+				break ;
+			s_simulator->cid_map.qid = qid;
+		}
 		else if (strncmp(buff, nqueue_prefix, strlen(nqueue_prefix)) == 0)
 		{
 			tokens = ntk_strsplit(buff + strlen(nqueue_prefix), ',');
