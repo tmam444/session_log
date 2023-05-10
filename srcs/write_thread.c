@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/14 14:33:19 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/04 18:38:02 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/10 14:10:00 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,7 +110,7 @@ void*	write_thread(void *__s_simulator)
 	assert(err_code != NULL);
 	*err_code = NONE;
 	buffer_id = 0;
-	while (!is_end && *err_code == NONE)
+	while (!is_end)
 	{
 		pthread_mutex_lock(&s_simulator->buffers[buffer_id].lock);
 		if (s_simulator->buffers[buffer_id].status == NEW)

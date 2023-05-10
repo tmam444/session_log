@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/24 16:43:23 by chulee            #+#    #+#             */
-/*   Updated: 2023/04/26 11:46:34 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/10 10:35:37 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ struct session_simulator*	get_simulator(void)
 			ret->buffers[i].status = EMPTY;
 			pthread_mutex_init(&ret->buffers[i].lock, NULL);
 		}
+		pthread_mutex_init(&ret->lock, NULL);
 	}
 	return (ret);
 }

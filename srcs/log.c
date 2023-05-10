@@ -6,7 +6,7 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/18 13:43:27 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/02 10:55:54 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/10 11:54:41 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,10 @@ void	log_message(log_level level, const char *format, ...)
     va_list args;
     va_start(args, format);
     vprintf(format, args);
-    va_end(args);
     printf("\n");
+    va_end(args);
+	fflush(stdout);
 	pthread_mutex_unlock(&log_mutex);
 	if (level == LOG_ERROR)
 		exit(EXIT_FAILURE);
-	fflush(stdout);
 }

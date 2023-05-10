@@ -6,16 +6,15 @@
 /*   By: chulee <chulee@nstek.com>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/10 14:35:29 by chulee            #+#    #+#             */
-/*   Updated: 2023/05/08 14:02:24 by chulee           ###   ########.fr       */
+/*   Updated: 2023/05/09 16:38:04 by chulee           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SESSION_LOG_H
-# define SESSION_LOG_H
+#ifndef FLOW_SIMULATOR_H
+# define FLOW_SIMULATOR_H
 # define _XOPEN_SOURCE
 # define EVENT_SIZE				(sizeof(struct inotify_event))
 # define EVENT_BUFFER_SIZE		(1024 * (EVENT_SIZE + NAME_MAX + 1))
-# define FILE_READ_BUFFER_SIZE	1024
 # define HEADER_SIZE			sizeof(struct RawFileHeader2_t)
 # define DATA_SIZE				sizeof(struct RawDataVer2_t)
 # define MAX_SEG_SIZE			8
@@ -23,6 +22,7 @@
 # define SECOND					60
 # define BUFF_LENGTH			2
 # define BUFF_MINUTE			2
+# define FILE_READ_BUFFER_SIZE	1024
 # include "raw_file_type.h"
 # include "list.h"
 # include "string_utils.h"
@@ -143,7 +143,6 @@ void*						read_thread(void *__s_simulator);
 void*						write_thread(void *__s_simulator);
 char*						make_real_filename(int user_id);
 char*						make_temp_filename(int user_id);
-char*						make_error_filename(int user_id);
 
 extern bool			force_quit;
 
